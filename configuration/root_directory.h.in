@@ -1,0 +1,4 @@
+#ifndef LOGL_ROOT
+#define LOGL_ROOT
+const char * logl_root = "${CMAKE_SOURCE_DIR}";
+#endif
