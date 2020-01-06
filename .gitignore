@@ -2,3 +2,6 @@
 build
 .DS_Store
 run.sh
+*.srctrlbm
+*.srctrldb
+*.srctrlprj

@@ -38,14 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------
 */
 
-#pragma once
-#ifndef AI_DEFINES_H_INC
-#define AI_DEFINES_H_INC
-
-#ifdef __GNUC__
-#   pragma GCC system_header
-#endif
-
 // We need those constants, workaround for any platforms where nobody defined them yet
 #if (!defined SIZE_MAX)
 #   define SIZE_MAX (~((size_t)0))
@@ -55,4 +47,3 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #   define UINT_MAX (~((unsigned int)0))
 #endif
 
-#endif // AI_DEINES_H_INC

@@ -1,6 +1,8 @@
 project(assimp-learn)
 cmake_minimum_required(VERSION 2.6)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -39,8 +41,8 @@ find_library(IOKit_LIBRARY IOKit)
 find_library(CoreVideo_LIBRARY CoreVideo)
 mark_as_advanced(COCOA_LIBRARY OpenGL_LIBRARY)
 set(APPLE_LIBS ${COCOA_LIBRARY} ${IOKit_LIBRARY} ${OpenGL_LIBRARY} ${CoreVideo_LIBRARY})
-set(APPLE_LIBS ${APPLE_LIBS} ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
-set(LIBS ${LIBS} ${APPLE_LIBS})
+set(APPLE_LIBS ${APPLE_LIBS} ${GLFW3_LIBRARY})
+set(LIBS ${LIBS} ${APPLE_LIBS} ${ASSIMP_LIBRARY})
 
 file(GLOB SHADERS
   "src/*.vs"
@@ -63,6 +65,6 @@ aux_source_directory("src/" SRC)
 add_executable(${NAME} ${SRC})
 target_link_libraries(${NAME} ${LIBS})
 
-set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin/${CHAPTER}")
-set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/bin/${CHAPTER}")
-set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/bin/${CHAPTER}")
+set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin/")
+set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/bin/")
+set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/bin/")
