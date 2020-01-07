@@ -20,6 +20,88 @@ void getTextures(const aiMaterial* material, aiTextureType type, const char* tn)
     }
 }
 
+int intResult{0};
+aiColor3D c3{0.0f, 0.0f, 0.0f};
+float floatResult{0.0f};
+unsigned int max{1};
+
+void processMaterialIntPros(const aiReturn* r, const char* tn)
+{
+    if(*r == AI_SUCCESS)
+    {
+        std::cout << tn << ":" << intResult;
+        std::cout << "  " << max << std::endl;
+    }
+}
+
+void processMaterialFloatPros(const aiReturn* r, const char* tn)
+{
+    if(*r == AI_SUCCESS)
+    {
+        std::cout << tn << ":" << floatResult;
+        std::cout << "  " << max << std::endl;
+    }
+}
+
+void processMaterial3DPros(const aiReturn* r, const char* tn)
+{
+    std::cout << "result: " << *r << std::endl;
+    if(*r == AI_SUCCESS)
+    {
+        std::cout << tn << ":" << c3.r << " " << c3.b << " " << c3.g<< std::endl;
+    }
+}
+
+void processMaterialPros(const aiMaterial* material)
+{
+    aiReturn r;
+    r = material->Get(AI_MATKEY_TWOSIDED,&intResult, &max);
+    processMaterialIntPros(&r, "AI_MATKEY_TWOSIDED");
+
+    r = material->Get(AI_MATKEY_SHADING_MODEL,&intResult, &max);
+    processMaterialIntPros(&r, "AI_MATKEY_SHADING_MODEL");
+
+    r = material->Get(AI_MATKEY_ENABLE_WIREFRAME,&intResult, &max);
+    processMaterialIntPros(&r, "AI_MATKEY_ENABLE_WIREFRAME");
+
+    r = material->Get(AI_MATKEY_BLEND_FUNC,&intResult, &max);
+    processMaterialIntPros(&r, "AI_MATKEY_BLEND_FUNC");
+
+    r = material->Get(AI_MATKEY_OPACITY,&floatResult, &max);
+    processMaterialFloatPros(&r, "AI_MATKEY_OPACITY");
+
+    r = material->Get(AI_MATKEY_SHININESS,&floatResult, &max);
+    processMaterialFloatPros(&r, "AI_MATKEY_SHININESS");
+    
+    r = material->Get(AI_MATKEY_REFLECTIVITY,&floatResult, &max);
+    processMaterialFloatPros(&r, "AI_MATKEY_REFLECTIVITY");
+
+    r = material->Get(AI_MATKEY_SHININESS_STRENGTH,&floatResult, &max);
+    processMaterialFloatPros(&r, "AI_MATKEY_SHININESS_STRENGTH");
+    
+    r = material->Get(AI_MATKEY_REFRACTI,&floatResult, &max);
+    processMaterialFloatPros(&r, "AI_MATKEY_REFRACTI");
+    
+    r = material->Get(AI_MATKEY_COLOR_DIFFUSE,c3);
+    processMaterial3DPros(&r, "AI_MATKEY_COLOR_DIFFUSE");
+
+    r = material->Get(AI_MATKEY_COLOR_AMBIENT,c3);
+    processMaterial3DPros(&r, "AI_MATKEY_COLOR_AMBIENT");
+    
+    r = material->Get(AI_MATKEY_COLOR_SPECULAR,c3);
+    processMaterial3DPros(&r, "AI_MATKEY_COLOR_SPECULAR");
+
+    r = material->Get(AI_MATKEY_COLOR_EMISSIVE,c3);
+    processMaterial3DPros(&r, "AI_MATKEY_COLOR_EMISSIVE");
+
+    r = material->Get(AI_MATKEY_COLOR_TRANSPARENT,c3);
+    processMaterial3DPros(&r, "AI_MATKEY_COLOR_TRANSPARENT");
+
+    r = material->Get(AI_MATKEY_COLOR_REFLECTIVE,c3);
+    processMaterial3DPros(&r, "AI_MATKEY_COLOR_REFLECTIVE");
+    
+}
+
 bool DoTheImportThing(const std::string& pFile)
 {
     LOG("PATH", pFile);
@@ -65,24 +147,34 @@ bool DoTheImportThing(const std::string& pFile)
             aiMaterial* material = scene->mMaterials[i];
             std::cout << " FILE:" << material->GetName().C_Str() << std::endl;
 
-            // for(int j = 0; j < material->mNumProperties; j++)
-            // {
-            //     aiMaterialProperty* mp = material->mProperties[j];
-            //     std::cout << "properites key:" << mp->mKey.C_Str();
-            //     std::cout << "  semantic:" << mp->mSemantic << std::endl;
-            // }
+            processMaterialPros(material);
+            
+            LOG("MATERIALS","pros ------");
+            for(int j = 0; j < material->mNumProperties; j++)
+            {
+                aiMaterialProperty* mp = material->mProperties[j];
+                std::cout << "properites key:" << mp->mKey.C_Str();
+                std::cout << "  semantic:" << mp->mSemantic << std::endl;
+                if(mp->mData)
+                {
+                    std::cout << "  exit:" << mp->mData;
+                    std::cout << "  index:" << mp->mIndex;
+                    std::cout << "  type:" << mp->mType;
+                    std::cout << "  length:"<< mp->mDataLength << std::endl;
+                }
+            }
 
-            getTextures(material, aiTextureType::aiTextureType_AMBIENT, "aiTextureType_AMBIENT");
-            getTextures(material, aiTextureType::aiTextureType_DIFFUSE, "aiTextureType_DIFFUSE");
-            getTextures(material, aiTextureType::aiTextureType_DISPLACEMENT, "aiTextureType_DISPLACEMENT");
-            getTextures(material, aiTextureType::aiTextureType_EMISSIVE, "aiTextureType_EMISSIVE");
-            getTextures(material, aiTextureType::aiTextureType_HEIGHT, "aiTextureType_HEIGHT");
-            getTextures(material, aiTextureType::aiTextureType_LIGHTMAP, "aiTextureType_LIGHTMAP");
-            getTextures(material, aiTextureType::aiTextureType_NORMALS, "aiTextureType_NORMALS");
-            getTextures(material, aiTextureType::aiTextureType_OPACITY, "aiTextureType_OPACITY");
-            getTextures(material, aiTextureType::aiTextureType_REFLECTION, "aiTextureType_REFLECTION");
-            getTextures(material, aiTextureType::aiTextureType_SHININESS, "aiTextureType_SHININESS");
-            getTextures(material, aiTextureType::aiTextureType_SPECULAR, "aiTextureType_SPECULAR");
+            // getTextures(material, aiTextureType::aiTextureType_AMBIENT, "aiTextureType_AMBIENT");
+            // getTextures(material, aiTextureType::aiTextureType_DIFFUSE, "aiTextureType_DIFFUSE");
+            // getTextures(material, aiTextureType::aiTextureType_DISPLACEMENT, "aiTextureType_DISPLACEMENT");
+            // getTextures(material, aiTextureType::aiTextureType_EMISSIVE, "aiTextureType_EMISSIVE");
+            // getTextures(material, aiTextureType::aiTextureType_HEIGHT, "aiTextureType_HEIGHT");
+            // getTextures(material, aiTextureType::aiTextureType_LIGHTMAP, "aiTextureType_LIGHTMAP");
+            // getTextures(material, aiTextureType::aiTextureType_NORMALS, "aiTextureType_NORMALS");
+            // getTextures(material, aiTextureType::aiTextureType_OPACITY, "aiTextureType_OPACITY");
+            // getTextures(material, aiTextureType::aiTextureType_REFLECTION, "aiTextureType_REFLECTION");
+            // getTextures(material, aiTextureType::aiTextureType_SHININESS, "aiTextureType_SHININESS");
+            // getTextures(material, aiTextureType::aiTextureType_SPECULAR, "aiTextureType_SPECULAR");
         }
     }
     
