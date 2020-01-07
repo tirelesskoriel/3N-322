@@ -1,192 +1,200 @@
-#include <iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <filesystem.h>
+#include <shader/my_shader_loader.h>
+#include <model/camera.h>
+#include <model/model.h>
+#include <cmath>
 
-#include <assimp/Importer.hpp>      // C++ importer interface
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h> 
+#include <iostream>
 
-#define LOG(TAG, MSG) std::cout << (TAG) << " >>> " << (MSG) << std::endl;
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window);
 
-void getTextures(const aiMaterial* material, aiTextureType type, const char* tn)
-{
-    std::cout << " type name:" << tn << std::endl;
-    
-    for(int k = 0; k < material->GetTextureCount(type); k++)
-    {
-        aiString p;
-        material->GetTexture(type, k, &p);
-        std::cout << " path:" << p.C_Str() << std::endl;
-        
-    }
-}
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
-int intResult{0};
-aiColor3D c3{0.0f, 0.0f, 0.0f};
-float floatResult{0.0f};
-unsigned int max{1};
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
 
-void processMaterialIntPros(const aiReturn* r, const char* tn)
-{
-    if(*r == AI_SUCCESS)
-    {
-        std::cout << tn << ":" << intResult;
-        std::cout << "  " << max << std::endl;
-    }
-}
-
-void processMaterialFloatPros(const aiReturn* r, const char* tn)
-{
-    if(*r == AI_SUCCESS)
-    {
-        std::cout << tn << ":" << floatResult;
-        std::cout << "  " << max << std::endl;
-    }
-}
-
-void processMaterial3DPros(const aiReturn* r, const char* tn)
-{
-    std::cout << "result: " << *r << std::endl;
-    if(*r == AI_SUCCESS)
-    {
-        std::cout << tn << ":" << c3.r << " " << c3.b << " " << c3.g<< std::endl;
-    }
-}
-
-void processMaterialPros(const aiMaterial* material)
-{
-    aiReturn r;
-    r = material->Get(AI_MATKEY_TWOSIDED,&intResult, &max);
-    processMaterialIntPros(&r, "AI_MATKEY_TWOSIDED");
-
-    r = material->Get(AI_MATKEY_SHADING_MODEL,&intResult, &max);
-    processMaterialIntPros(&r, "AI_MATKEY_SHADING_MODEL");
-
-    r = material->Get(AI_MATKEY_ENABLE_WIREFRAME,&intResult, &max);
-    processMaterialIntPros(&r, "AI_MATKEY_ENABLE_WIREFRAME");
-
-    r = material->Get(AI_MATKEY_BLEND_FUNC,&intResult, &max);
-    processMaterialIntPros(&r, "AI_MATKEY_BLEND_FUNC");
-
-    r = material->Get(AI_MATKEY_OPACITY,&floatResult, &max);
-    processMaterialFloatPros(&r, "AI_MATKEY_OPACITY");
-
-    r = material->Get(AI_MATKEY_SHININESS,&floatResult, &max);
-    processMaterialFloatPros(&r, "AI_MATKEY_SHININESS");
-    
-    r = material->Get(AI_MATKEY_REFLECTIVITY,&floatResult, &max);
-    processMaterialFloatPros(&r, "AI_MATKEY_REFLECTIVITY");
-
-    r = material->Get(AI_MATKEY_SHININESS_STRENGTH,&floatResult, &max);
-    processMaterialFloatPros(&r, "AI_MATKEY_SHININESS_STRENGTH");
-    
-    r = material->Get(AI_MATKEY_REFRACTI,&floatResult, &max);
-    processMaterialFloatPros(&r, "AI_MATKEY_REFRACTI");
-    
-    r = material->Get(AI_MATKEY_COLOR_DIFFUSE,c3);
-    processMaterial3DPros(&r, "AI_MATKEY_COLOR_DIFFUSE");
-
-    r = material->Get(AI_MATKEY_COLOR_AMBIENT,c3);
-    processMaterial3DPros(&r, "AI_MATKEY_COLOR_AMBIENT");
-    
-    r = material->Get(AI_MATKEY_COLOR_SPECULAR,c3);
-    processMaterial3DPros(&r, "AI_MATKEY_COLOR_SPECULAR");
-
-    r = material->Get(AI_MATKEY_COLOR_EMISSIVE,c3);
-    processMaterial3DPros(&r, "AI_MATKEY_COLOR_EMISSIVE");
-
-    r = material->Get(AI_MATKEY_COLOR_TRANSPARENT,c3);
-    processMaterial3DPros(&r, "AI_MATKEY_COLOR_TRANSPARENT");
-
-    r = material->Get(AI_MATKEY_COLOR_REFLECTIVE,c3);
-    processMaterial3DPros(&r, "AI_MATKEY_COLOR_REFLECTIVE");
-    
-}
-
-bool DoTheImportThing(const std::string& pFile)
-{
-    LOG("PATH", pFile);
-    // Create an instance of the Importer class
-    Assimp::Importer importer;
-
-    // And have it read the given file with some example postprocessing
-    // Usually - if speed is not the most important aspect for you - you'll
-    // probably to request more postprocessing than we do in this example.
-    const aiScene* scene = importer.ReadFile( pFile,
-    aiProcess_CalcTangentSpace       |
-    aiProcess_Triangulate            |
-    aiProcess_JoinIdenticalVertices  |
-    aiProcess_SortByPType);
-
-    // If the import failed, report it
-    if( !scene)
-    {
-        std::cout << "error:" << importer.GetErrorString() << std::endl;
-        return false;
-    }
-    if(scene->HasTextures())
-    {
-        LOG("TEXTURE","-----");
-        for(int i = 0; i < scene->mNumTextures; i++)
-        {
-            std::cout << "hint:" << scene->mTextures[i]->achFormatHint;
-            std::cout << " WIDTH:" << scene->mTextures[i]->mWidth;
-            std::cout << " HEIGHT:" << scene->mTextures[i]->mHeight;
-            std::cout << " FILE:" << scene->mTextures[i]->mFilename.C_Str() << std::endl;
-        }
-    }
-    if(scene->HasMeshes())
-    {   
-        LOG("MESH","-----");
-    }
-
-    if(scene->HasMaterials())
-    {   
-        LOG("MATERIALS","-----");
-        for (int i = 0; i < scene->mNumMaterials; i++)
-        {
-            aiMaterial* material = scene->mMaterials[i];
-            std::cout << " FILE:" << material->GetName().C_Str() << std::endl;
-
-            processMaterialPros(material);
-            
-            LOG("MATERIALS","pros ------");
-            for(int j = 0; j < material->mNumProperties; j++)
-            {
-                aiMaterialProperty* mp = material->mProperties[j];
-                std::cout << "properites key:" << mp->mKey.C_Str();
-                std::cout << "  semantic:" << mp->mSemantic << std::endl;
-                if(mp->mData)
-                {
-                    std::cout << "  exit:" << mp->mData;
-                    std::cout << "  index:" << mp->mIndex;
-                    std::cout << "  type:" << mp->mType;
-                    std::cout << "  length:"<< mp->mDataLength << std::endl;
-                }
-            }
-
-            // getTextures(material, aiTextureType::aiTextureType_AMBIENT, "aiTextureType_AMBIENT");
-            // getTextures(material, aiTextureType::aiTextureType_DIFFUSE, "aiTextureType_DIFFUSE");
-            // getTextures(material, aiTextureType::aiTextureType_DISPLACEMENT, "aiTextureType_DISPLACEMENT");
-            // getTextures(material, aiTextureType::aiTextureType_EMISSIVE, "aiTextureType_EMISSIVE");
-            // getTextures(material, aiTextureType::aiTextureType_HEIGHT, "aiTextureType_HEIGHT");
-            // getTextures(material, aiTextureType::aiTextureType_LIGHTMAP, "aiTextureType_LIGHTMAP");
-            // getTextures(material, aiTextureType::aiTextureType_NORMALS, "aiTextureType_NORMALS");
-            // getTextures(material, aiTextureType::aiTextureType_OPACITY, "aiTextureType_OPACITY");
-            // getTextures(material, aiTextureType::aiTextureType_REFLECTION, "aiTextureType_REFLECTION");
-            // getTextures(material, aiTextureType::aiTextureType_SHININESS, "aiTextureType_SHININESS");
-            // getTextures(material, aiTextureType::aiTextureType_SPECULAR, "aiTextureType_SPECULAR");
-        }
-    }
-    
-
-    // Now we can access the file's contents.
-    // DoTheSceneProcessing( scene);
-    // We're done. Everything will be cleaned up by the importer destructor
-    return true;
-}
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 int main()
 {
-    DoTheImportThing(FileSystem::getPath("resources/objects/gd/sazabi_1.obj").c_str());
+    // glfw: initialize and configure
+    // ------------------------------
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
+#endif
+
+    // glfw window creation
+    // --------------------
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    // configure global opengl state
+    // -----------------------------
+    glEnable(GL_DEPTH_TEST);
+
+    // build and compile shaders
+    // -------------------------
+    ShaderLoader ourShader("1.model_loading.vs", "1.model_loading.fs");
+
+    // load models
+    // -----------
+    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"));
+
+    glm::vec3 light = glm::vec3(1.0f, 1.0f, 1.0f);
+    // draw in wireframe
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    ourShader.use();
+    ourShader.setVec3("light.ambient", glm::vec3(0.3f, 0.3f, 0.3f));
+    ourShader.setVec3("light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+    ourShader.setVec3("light.specular", glm::vec3(0.6f, 0.6f, 0.6f));
+    ourShader.setVec3("light.position", glm::vec3(100.0f, 100.0f, 100.0f));
+
+    // render loop
+    // -----------
+    while (!glfwWindowShouldClose(window))
+    {
+        // per-frame time logic
+        // --------------------
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        // input
+        // -----
+        processInput(window);
+
+        // render
+        // ------
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // don't forget to enable shader before setting uniforms
+        ourShader.use();
+        ourShader.setVec3("viewPos", camera.Position);
+        float time = (float)glfwGetTime();
+        ourShader.setVec3("light.position", glm::vec3(sinf(time), 0.0f, -cosf(time)));
+
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
+
+        // render the loaded model
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -2.0f, -2.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.003f, 0.003f, 0.003f));	// it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model);
+        // mat3(transpose(inverse(model)))
+        ourShader.setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
+
+        ourModel.Draw(ourShader);
+
+
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // -------------------------------------------------------------------------------
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
+    glfwTerminate();
     return 0;
+}
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and 
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
+}
+
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(yoffset);
 }

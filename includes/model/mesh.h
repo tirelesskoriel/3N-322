@@ -46,12 +46,13 @@ public:
     glm::vec3 diffuse;
     glm::vec3 specular;
     glm::vec3 ambient;
+    float shininess;
 
     unsigned int VAO;
 
     /*  Functions  */
     // constructor
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 diffuse, glm::vec3 specular, glm::vec3 ambient)
+    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 diffuse, glm::vec3 specular, glm::vec3 ambient, float shininess)
     {
         this->vertices = vertices;
         this->indices = indices;
@@ -59,13 +60,14 @@ public:
         this->ambient = ambient;
         this->specular = specular;
         this->diffuse = diffuse;
+        this->shininess = shininess;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
 
     // render the mesh
-    void Draw(Shader shader) 
+    void Draw(ShaderLoader shader) 
     {
         // bind appropriate textures
         unsigned int diffuseNr  = 1;
@@ -93,9 +95,10 @@ public:
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }
         shader.use();
-        shader.setVec3("diffuse", diffuse);
-        shader.setVec3("ambient", ambient);
-        shader.setVec3("specular", specular);
+        shader.setVec3("material.diffuse", diffuse);
+        shader.setVec3("material.ambient", ambient);
+        shader.setVec3("material.specular", specular);
+        shader.setFloat("material.shininess", shininess);
         
         // draw mesh
         glBindVertexArray(VAO);
