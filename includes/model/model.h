@@ -40,7 +40,7 @@ public:
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader shader)
+    void Draw(ShaderLoader shader)
     {
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
@@ -217,7 +217,10 @@ private:
             ambient.b = c3.b;
         }
 
-        return Mesh(vertices, indices, textures, diffuse, specular, ambient);
+        float s = 1;
+        material->Get(AI_MATKEY_SHININESS, &s, NULL);
+        
+        return Mesh(vertices, indices, textures, diffuse, specular, ambient, s);
     }
 
     // checks all material textures of a given type and loads the textures if they're not loaded yet.

@@ -26,8 +26,8 @@ set(LIBS ${LIBS} STB_IMAGE)
 add_library(GLAD "src/tools/glad.c")
 set(LIBS ${LIBS} GLAD)
 
-# add_library(SHADER_LOADER "src/tools/my_shader_loader.cpp")
-# set(LIBS ${LIBS} SHADER_LOADER)
+add_library(SHADER_LOADER "src/tools/my_shader_loader.cpp")
+set(LIBS ${LIBS} SHADER_LOADER)
 
 # add_library(TEXTURE_LOADER "src/tools/texture_2d.cpp")
 # set(LIBS ${LIBS} TEXTURE_LOADER)
