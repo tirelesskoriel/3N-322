@@ -19,18 +19,23 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <model/custom_math.h>
 using namespace std;
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
-
+glm::mat4 aim42glm4(aiMatrix4x4* aim4);
 class Model 
 {
 public:
     /*  Model Data */
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh> meshes;
+    vector<Bone> bones;
+    const aiScene* scene;
+    Assimp::Importer importer;
     string directory;
     bool gammaCorrection;
+    glm::mat4 m_GlobalInverseTransform;
 
     /*  Functions   */
     // constructor, expects a filepath to a 3D model.
@@ -52,8 +57,8 @@ private:
     void loadModel(string const &path)
     {
         // read file via ASSIMP
-        Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
         // check for errors
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         {
@@ -63,6 +68,7 @@ private:
         // retrieve the directory path of the filepath
         directory = path.substr(0, path.find_last_of('/'));
 
+        m_GlobalInverseTransform = transByMat4(&(scene->mRootNode->mTransformation.Inverse()));
         // process ASSIMP's root node recursively
         processNode(scene->mRootNode, scene);
     }
@@ -76,7 +82,9 @@ private:
             // the node object only contains indices to index the actual objects in the scene. 
             // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            meshes.push_back(processMesh(mesh, scene));
+            Mesh m = processMesh(mesh, scene);
+            meshes.push_back(m);
+            processBones(mesh, &m);
         }
 
         // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
@@ -87,6 +95,52 @@ private:
 
     }
 
+    void processBones(aiMesh *aiMesh, Mesh* mesh)
+    {
+        if (aiMesh->HasBones())
+        {
+            // aiVertexWeight w = aiMesh->mBones[0]->mWeights[0];
+            // mesh->vertices[w.mVertexId].weight.push_back(w.mWeight);
+            for (unsigned int m = 0; m < aiMesh->mNumBones; m++)
+            {
+                aiBone* aiBone = aiMesh->mBones[m];
+                Bone bone;
+                bone.id = m;
+                bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
+                bone.name = aiBone->mName;
+                bones.push_back(bone);
+                
+                for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
+                {
+                    // std::cout << "dddddddddd   " << aiBone->mWeights[k].mVertexId << std::endl;
+                    aiVertexWeight weight = aiBone->mWeights[k];
+                    mesh->vertices[weight.mVertexId].weight.push_back(weight.mWeight);
+                    mesh->vertices[weight.mVertexId].boneId.push_back(bone.id);
+                }
+            }
+        }
+
+        for (unsigned int k = 0; k < mesh->vertices.size(); k++)
+        {
+            int r = 4 - mesh->vertices[k].weight.size();
+            if (r > 0)
+            {
+                for (int i = 0 ; i < 5; i++)
+                {
+                    mesh->vertices[k].weight.push_back(0.0f);
+                }
+            }
+
+            r = 4 - mesh->vertices[k].boneId.size();
+            if (r > 0)
+            {
+                for (int i = 0 ; i < 5; i++)
+                {
+                    mesh->vertices[k].boneId.push_back(1);
+                }
+            }
+        }
+    }
 
     Mesh processMesh(aiMesh *mesh, const aiScene *scene)
     {
@@ -256,7 +310,6 @@ private:
         return textures;
     }
 };
-
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
 {

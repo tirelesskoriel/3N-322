@@ -28,6 +28,16 @@ struct Vertex {
     glm::vec3 Tangent;
     // bitangent
     glm::vec3 Bitangent;
+
+    vector<float> weight;
+    vector<int> boneId;
+};
+
+struct Bone{
+    unsigned int id;
+    aiString name;
+    glm::mat4 offset;
+    glm::mat4 finalOffset;
 };
 
 struct Texture {
@@ -152,6 +162,12 @@ private:
         // vertex bitangent
         glEnableVertexAttribArray(5);
         glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
+
+        glEnableVertexAttribArray(7);
+        glVertexAttribIPointer(7, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
 
         glBindVertexArray(0);
     }

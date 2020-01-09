@@ -9,15 +9,31 @@
 #include <shader/my_shader_loader.h>
 #include <model/camera.h>
 #include <model/model.h>
+#include <model/custom_math.h>
 #include <cmath>
 
 #include <iostream>
+#include <sys/time.h>
+#include <string>
+#include <assimp/scene.h>
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+
+long long GetCurrentTimeMillis();
+float GetRunningTime();
+uint FindPosition(float AnimationTime, const aiNodeAnim* pNodeAnim);
+uint FindRotation(float AnimationTime, const aiNodeAnim* pNodeAnim);
+uint FindScaling(float AnimationTime, const aiNodeAnim* pNodeAnim);
+void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+void ReadNodeHeirarchy(Model* model, float AnimationTime, const aiNode* pNode, const glm::mat4& ParentTransform);
+void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transforms);
+const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -32,6 +48,8 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+long long m_startTime;
 
 int main()
 {
@@ -73,6 +91,8 @@ int main()
         return -1;
     }
 
+    m_startTime = GetCurrentTimeMillis();
+
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
@@ -84,7 +104,7 @@ int main()
 
     // load models
     // -----------
-    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"));
+    Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
 
     glm::vec3 light = glm::vec3(1.0f, 1.0f, 1.0f);
     // draw in wireframe
@@ -95,6 +115,16 @@ int main()
     ourShader.setVec3("light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
     ourShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     ourShader.setVec3("light.position", glm::vec3(100.0f, 100.0f, 100.0f));
+
+    vector<glm::mat4> Transforms;
+    vector<string> boneLocations;
+
+    for (int i = 0; i < 100; i++)
+    {
+        stringstream ss;
+        ss << "gBones[" << i << "]";
+        boneLocations.push_back(ss.str());
+    }
 
     // render loop
     // -----------
@@ -112,11 +142,20 @@ int main()
 
         // render
         // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
+
+        float RunningTime = GetRunningTime();
+
+        BoneTransform(&ourModel, RunningTime, Transforms);
+        
+        for (uint i = 0 ; i < Transforms.size() && i < 100 ; i++) {
+            ourShader.setMat4(boneLocations[i], Transforms[i]);
+        }
+
         ourShader.setVec3("viewPos", camera.Position);
         float time = (float)glfwGetTime();
         ourShader.setVec3("light.position", glm::vec3(sinf(time), 0.0f, -cosf(time)));
@@ -130,7 +169,7 @@ int main()
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -2.0f, -2.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.003f, 0.003f, 0.003f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         // mat3(transpose(inverse(model)))
         ourShader.setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
@@ -213,4 +252,201 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT)
         hold_press = action == GLFW_PRESS;
+}
+
+long long GetCurrentTimeMillis()
+{
+    timeval t;
+    gettimeofday(&t, NULL);
+
+    long long ret = t.tv_sec * 1000 + t.tv_usec / 1000;
+    return ret;
+}
+
+float GetRunningTime()
+{
+    float RunningTime = (float)((double)GetCurrentTimeMillis() - (double)m_startTime) / 1000.0f;
+    return RunningTime;
+}
+
+uint FindPosition(float AnimationTime, const aiNodeAnim* pNodeAnim)
+{    
+    for (uint i = 0 ; i < pNodeAnim->mNumPositionKeys - 1 ; i++) {
+        if (AnimationTime < (float)pNodeAnim->mPositionKeys[i + 1].mTime) {
+            return i;
+        }
+    }
+    assert(0);
+
+    return 0;
+}
+
+
+uint FindRotation(float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    assert(pNodeAnim->mNumRotationKeys > 0);
+
+    for (uint i = 0 ; i < pNodeAnim->mNumRotationKeys - 1 ; i++) {
+        if (AnimationTime < (float)pNodeAnim->mRotationKeys[i + 1].mTime) {
+            return i;
+        }
+    }
+    
+    assert(0);
+
+    return 0;
+}
+
+
+uint FindScaling(float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    assert(pNodeAnim->mNumScalingKeys > 0);
+    
+    for (uint i = 0 ; i < pNodeAnim->mNumScalingKeys - 1 ; i++) {
+        if (AnimationTime < (float)pNodeAnim->mScalingKeys[i + 1].mTime) {
+            return i;
+        }
+    }
+    
+    assert(0);
+
+    return 0;
+}
+
+
+void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    if (pNodeAnim->mNumPositionKeys == 1) {
+        Out = pNodeAnim->mPositionKeys[0].mValue;
+        return;
+    }
+            
+    uint PositionIndex = FindPosition(AnimationTime, pNodeAnim);
+    uint NextPositionIndex = (PositionIndex + 1);
+    assert(NextPositionIndex < pNodeAnim->mNumPositionKeys);
+    float DeltaTime = (float)(pNodeAnim->mPositionKeys[NextPositionIndex].mTime - pNodeAnim->mPositionKeys[PositionIndex].mTime);
+    float Factor = (AnimationTime - (float)pNodeAnim->mPositionKeys[PositionIndex].mTime) / DeltaTime;
+    assert(Factor >= 0.0f && Factor <= 1.0f);
+    const aiVector3D& Start = pNodeAnim->mPositionKeys[PositionIndex].mValue;
+    const aiVector3D& End = pNodeAnim->mPositionKeys[NextPositionIndex].mValue;
+    aiVector3D Delta = End - Start;
+    Out = Start + Factor * Delta;
+}
+
+
+void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+	// we need at least two values to interpolate...
+    if (pNodeAnim->mNumRotationKeys == 1) {
+        Out = pNodeAnim->mRotationKeys[0].mValue;
+        return;
+    }
+    
+    uint RotationIndex = FindRotation(AnimationTime, pNodeAnim);
+    uint NextRotationIndex = (RotationIndex + 1);
+    assert(NextRotationIndex < pNodeAnim->mNumRotationKeys);
+    float DeltaTime = (float)(pNodeAnim->mRotationKeys[NextRotationIndex].mTime - pNodeAnim->mRotationKeys[RotationIndex].mTime);
+    float Factor = (AnimationTime - (float)pNodeAnim->mRotationKeys[RotationIndex].mTime) / DeltaTime;
+    assert(Factor >= 0.0f && Factor <= 1.0f);
+    const aiQuaternion& StartRotationQ = pNodeAnim->mRotationKeys[RotationIndex].mValue;
+    const aiQuaternion& EndRotationQ   = pNodeAnim->mRotationKeys[NextRotationIndex].mValue;    
+    aiQuaternion::Interpolate(Out, StartRotationQ, EndRotationQ, Factor);
+    Out = Out.Normalize();
+}
+
+
+void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    if (pNodeAnim->mNumScalingKeys == 1) {
+        Out = pNodeAnim->mScalingKeys[0].mValue;
+        return;
+    }
+
+    uint ScalingIndex = FindScaling(AnimationTime, pNodeAnim);
+    uint NextScalingIndex = (ScalingIndex + 1);
+    assert(NextScalingIndex < pNodeAnim->mNumScalingKeys);
+    float DeltaTime = (float)(pNodeAnim->mScalingKeys[NextScalingIndex].mTime - pNodeAnim->mScalingKeys[ScalingIndex].mTime);
+    float Factor = (AnimationTime - (float)pNodeAnim->mScalingKeys[ScalingIndex].mTime) / DeltaTime;
+    assert(Factor >= 0.0f && Factor <= 1.0f);
+    const aiVector3D& Start = pNodeAnim->mScalingKeys[ScalingIndex].mValue;
+    const aiVector3D& End   = pNodeAnim->mScalingKeys[NextScalingIndex].mValue;
+    aiVector3D Delta = End - Start;
+    Out = Start + Factor * Delta;
+}
+
+
+void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const glm::mat4& ParentTransform)
+{    
+    const aiAnimation* pAnimation = model->scene->mAnimations[0];
+        
+    glm::mat4 NodeTransformation;
+    transByMat4(&NodeTransformation, &pNode->mTransformation);
+     
+    const aiNodeAnim* pNodeAnim = FindNodeAnim(pAnimation, pNode->mName);
+    
+    if (pNodeAnim) {
+        // Interpolate scaling and generate scaling transformation matrix
+        aiVector3D Scaling;
+        CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
+        glm::mat4 ScalingM = initScaleTransform(Scaling.x, Scaling.y, Scaling.z);
+        
+        // Interpolate rotation and generate rotation transformation matrix
+        aiQuaternion RotationQ;
+        CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);        
+        glm::mat4 RotationM = transByMat3(RotationQ.GetMatrix());
+
+        // Interpolate translation and generate translation transformation matrix
+        aiVector3D Translation;
+        CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
+        glm::mat4 TranslationM = initTranslationTransform(Translation.x, Translation.y, Translation.z);
+        
+        // Combine the above transformations
+        NodeTransformation = TranslationM * RotationM * ScalingM;
+    }
+       
+    glm::mat4 GlobalTransformation = ParentTransform * NodeTransformation;
+    
+    for (uint i = 0 ; i < model->bones.size() ; i++) {
+        Bone bone = model->bones[i];
+        if (bone.name == pNode->mName)
+        {
+            bone.finalOffset = (model->m_GlobalInverseTransform) * GlobalTransformation * (bone.offset);
+        }
+    }
+    
+    for (uint i = 0 ; i < pNode->mNumChildren ; i++) {
+        ReadNodeHeirarchy(model, AnimationTime, pNode->mChildren[i], GlobalTransformation);
+    }
+}
+
+
+void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transforms)
+{
+    glm::mat4 Identity = init();
+    
+    float TicksPerSecond = (float)(model->scene->mAnimations[0]->mTicksPerSecond != 0 ? model->scene->mAnimations[0]->mTicksPerSecond : 25.0f);
+    float TimeInTicks = TimeInSeconds * TicksPerSecond;
+    float AnimationTime = fmod(TimeInTicks, (float)model->scene->mAnimations[0]->mDuration);
+
+    ReadNodeHeirarchy(model, AnimationTime, model->scene->mRootNode, Identity);
+
+    Transforms.resize(model->bones.size());
+
+    for (uint i = 0 ; i < model->bones.size() ; i++) {
+        Transforms[i] = model->bones[i].finalOffset;
+    }
+}
+
+
+const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName)
+{
+    for (uint i = 0 ; i < pAnimation->mNumChannels ; i++) {
+        const aiNodeAnim* pNodeAnim = pAnimation->mChannels[i];
+        
+        if (pNodeAnim->mNodeName == NodeName) {
+            return pNodeAnim;
+        }
+    }
+    
+    return NULL;
 }
