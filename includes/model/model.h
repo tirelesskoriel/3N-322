@@ -29,7 +29,7 @@ class Model
 public:
     /*  Model Data */
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-    vector<Mesh> meshes;
+    vector<Mesh*> meshes;
     vector<Bone> bones;
     const aiScene* scene;
     Assimp::Importer importer;
@@ -43,12 +43,19 @@ public:
     {
         loadModel(path);
     }
+    ~Model()
+    {
+        for (int i = 0; i < meshes.size(); i++)
+        {
+            delete meshes[i];
+        }
+    }
 
     // draws the model, and thus all its meshes
     void Draw(ShaderLoader shader)
     {
         for(unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i].Draw(shader);
+            meshes[i]->Draw(shader);
     }
     
 private:
@@ -85,9 +92,12 @@ private:
             // the node object only contains indices to index the actual objects in the scene. 
             // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            Mesh m = processMesh(mesh, scene);
+            // if(!mesh->HasBones())
+            //     continue;
+            Mesh* m = processMesh(mesh, scene);
             meshes.push_back(m);
-            processBones(mesh, &m);
+            processBones(mesh, m);
+            
         }
 
         // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
@@ -100,49 +110,61 @@ private:
 
     void processBones(aiMesh *aiMesh, Mesh* mesh)
     {
-        if (aiMesh->HasBones())
-        {
-            // std::cout << "-------------" << std::endl;
-            // aiVertexWeight w = aiMesh->mBones[0]->mWeights[0];
-            // mesh->vertices[w.mVertexId].weight.push_back(w.mWeight);
-            
-            for (unsigned int m = 0; m < aiMesh->mNumBones; m++)
-            {
-                aiBone* aiBone = aiMesh->mBones[m];
-                // std::cout << "-------------" << aiMesh->mBones[m]->mName.C_Str() << "  "<< aiMesh->mBones[m]->mNumWeights << std::endl;
-                Bone bone;
-                bone.id = m;
-                bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
-                bone.name = aiBone->mName;
-                bones.push_back(bone);
-                for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
-                {
-                    aiVertexWeight weight = aiBone->mWeights[k];
-                    mesh->vertices[weight.mVertexId].add(weight.mWeight, bone.id);
-                }
-            }
+        // std::cout << "processBones======" << std::endl;
+        // if (aiMesh->HasBones())
+        // {
+        //     // std::cout << "has bones" << std::endl;
+        //     for (unsigned int m = 0; m < aiMesh->mNumBones; m++)
+        //     {
+        //         aiBone* aiBone = aiMesh->mBones[m];
+        //         Bone bone;
+        //         bone.id = m;
+        //         bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
+        //         bone.name = aiBone->mName;
+        //         bones.push_back(bone);
+        //         for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
+        //         {
+        //             aiVertexWeight weight = aiBone->mWeights[k];
+        //             mesh->vertices[weight.mVertexId].add(weight.mWeight, bone.id);
+        //         }
+        //     }
+        // }
 
-            for (unsigned int k = 0; k < mesh->vertices.size(); k++)
-            {
-                int count = 0;
-                    
-                std::cout << "w1:" << mesh->vertices[k].weight[0]<< "   b1:" << mesh->vertices[k].boneId[0];
-                std::cout << "      w2:" << mesh->vertices[k].weight[1]<< "  b2:" << mesh->vertices[k].boneId[1];
-                std::cout << "      w3:" << mesh->vertices[k].weight[2]<< "  b3:" << mesh->vertices[k].boneId[2];
-                std::cout << "      w4:" << mesh->vertices[k].weight[3]<< "  b4:" << mesh->vertices[k].boneId[3] << std::endl;
-                    // if(mesh->vertices[k].weight[j] == 0.0f && mesh->vertices[k].boneId[j] == 0)
-                    // {
-                    //     count++;
-                    // }
+        // for (unsigned int k = 0; k < mesh->vertices.size(); k++)
+        // {
+        //     if (!mesh->vertices[k].is_init())
+        //     {
+        //         std::cout << "w1:" << mesh->vertices[k].weight[0]<< "   b1:" << mesh->vertices[k].boneId[0];
+        //         std::cout << "      w2:" << mesh->vertices[k].weight[1]<< "  b2:" << mesh->vertices[k].boneId[1];
+        //         std::cout << "      w3:" << mesh->vertices[k].weight[2]<< "  b3:" << mesh->vertices[k].boneId[2];
+        //         std::cout << "      w4:" << mesh->vertices[k].weight[3]<< "  b4:" << mesh->vertices[k].boneId[3] << std::endl;
+        //     }
+        // }
 
-                // if(count == MAX_POINT){
-                //     std::cout << "null vvvv:" << k << std::endl;
-                // }
-            }
-        }
+        // for (unsigned int k = 0; k < mesh.vertices.size(); k++)
+        // {
+        //     std::cout << "w1:" << mesh->vertices[k].weight[0]<< "   b1:" << mesh->vertices[k].boneId[0];
+        //     std::cout << "      w2:" << mesh->vertices[k].weight[1]<< "  b2:" << mesh->vertices[k].boneId[1];
+        //     std::cout << "      w3:" << mesh->vertices[k].weight[2]<< "  b3:" << mesh->vertices[k].boneId[2];
+        //     std::cout << "      w4:" << mesh->vertices[k].weight[3]<< "  b4:" << mesh->vertices[k].boneId[3] << std::endl;
+
+        //     // int count = 0;
+        //     // for (uint m = 0; m < MAX_POINT; m++)
+        //     // {
+        //     //     if(mesh->vertices[k].weight[0] == 0.0f && mesh->vertices[k].boneId[0] == 0)
+        //     //     {
+        //     //         count++;
+        //     //     }
+        //     // }
+
+        //     // if(count == MAX_POINT)
+        //     // {
+        //     //     std::cout << "k:"<< k << std::endl;
+        //     // }
+        // }
     }
 
-    Mesh processMesh(aiMesh *mesh, const aiScene *scene)
+    Mesh* processMesh(aiMesh *mesh, const aiScene *scene)
     {
         // data to fill
         vector<Vertex> vertices;
@@ -165,48 +187,48 @@ private:
             vector.z = mesh->mNormals[i].z;
             vertex.Normal = vector;
             // texture coordinates
-            if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-            {
-                glm::vec2 vec;
-                // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
-                // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-                vec.x = mesh->mTextureCoords[0][i].x; 
-                vec.y = mesh->mTextureCoords[0][i].y;
+            // if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+            // {
+            //     glm::vec2 vec;
+            //     // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+            //     // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+            //     vec.x = mesh->mTextureCoords[0][i].x; 
+            //     vec.y = mesh->mTextureCoords[0][i].y;
 
-                vertex.TexCoords = vec;
-            }
-            else
-                vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+            //     vertex.TexCoords = vec;
+            // }
+            // else
+            //     vertex.TexCoords = glm::vec2(0.0f, 0.0f);
             
 
-            if(mesh->mTangents)
-            {
-                // tangent
-                vector.x = mesh->mTangents[i].x;
-                vector.y = mesh->mTangents[i].y;
-                vector.z = mesh->mTangents[i].z;
-                vertex.Tangent = vector;
-            }
+            // if(mesh->mTangents)
+            // {
+            //     // tangent
+            //     vector.x = mesh->mTangents[i].x;
+            //     vector.y = mesh->mTangents[i].y;
+            //     vector.z = mesh->mTangents[i].z;
+            //     vertex.Tangent = vector;
+            // }
 
-            if(mesh->mBitangents)
-            {
-                // bitangent
-                vector.x = mesh->mBitangents[i].x;
-                vector.y = mesh->mBitangents[i].y;
-                vector.z = mesh->mBitangents[i].z;
-                vertex.Bitangent = vector;
-            }
+            // if(mesh->mBitangents)
+            // {
+            //     // bitangent
+            //     vector.x = mesh->mBitangents[i].x;
+            //     vector.y = mesh->mBitangents[i].y;
+            //     vector.z = mesh->mBitangents[i].z;
+            //     vertex.Bitangent = vector;
+            // }
 
-            for(int j = 0 ; j < AI_MAX_NUMBER_OF_COLOR_SETS; j++)
-            {
-                if(mesh->HasVertexColors(j))
-                {
-                    vector.x = mesh->mColors[j][i].r;
-                    vector.y = mesh->mColors[j][i].g;
-                    vector.z = mesh->mColors[j][i].b;
-                    vertex.TexColor = vector;
-                }
-            }
+            // for(int j = 0 ; j < AI_MAX_NUMBER_OF_COLOR_SETS; j++)
+            // {
+            //     if(mesh->HasVertexColors(j))
+            //     {
+            //         vector.x = mesh->mColors[j][i].r;
+            //         vector.y = mesh->mColors[j][i].g;
+            //         vector.z = mesh->mColors[j][i].b;
+            //         vertex.TexColor = vector;
+            //     }
+            // }
             
             vertices.push_back(vertex);
         }
@@ -273,8 +295,27 @@ private:
 
         float s = 1;
         material->Get(AI_MATKEY_SHININESS, &s, NULL);
+
+        if (mesh->HasBones())
+        {
+            // std::cout << "has bones" << std::endl;
+            for (unsigned int m = 0; m < mesh->mNumBones; m++)
+            {
+                aiBone* aiBone = mesh->mBones[m];
+                Bone bone;
+                bone.id = m;
+                bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
+                bone.name = aiBone->mName;
+                bones.push_back(bone);
+                for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
+                {
+                    aiVertexWeight weight = aiBone->mWeights[k];
+                    vertices[weight.mVertexId].add(weight.mWeight, bone.id);
+                }
+            }
+        }
         
-        return Mesh(vertices, indices, textures, diffuse, specular, ambient, s);
+        return new Mesh(vertices, indices, textures, diffuse, specular, ambient, s);
     }
 
     // checks all material textures of a given type and loads the textures if they're not loaded yet.

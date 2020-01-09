@@ -409,13 +409,9 @@ void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const g
        
     glm::mat4 GlobalTransformation = ParentTransform * NodeTransformation;
     for (uint i = 0 ; i < model->bones.size() ; i++) {
-        // Bone bone = model->bones[i];
         if (model->bones[i].name == pNode->mName)
         {
-            // print(&(model->m_GlobalInverseTransform));
             model->bones[i].finalOffset = (model->m_GlobalInverseTransform) * GlobalTransformation * (model->bones[i].offset);
-            // LOG(model->bones[i].name.C_Str());
-            // print(&(model->bones[i].finalOffset));
         }
     }
     
@@ -433,18 +429,12 @@ void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transfo
     float TimeInTicks = TimeInSeconds * TicksPerSecond;
     float AnimationTime = fmod(TimeInTicks, (float)model->scene->mAnimations[0]->mDuration);
 
-    // LOG(AnimationTime);
-
     ReadNodeHeirarchy(model, AnimationTime, model->scene->mRootNode, Identity);
-    // LOG("--------------------");
     Transforms.resize(model->bones.size());
 
     for (uint i = 0 ; i < model->bones.size() ; i++) {
         Transforms[i] = model->bones[i].finalOffset;
-        // LOG(model->bones[i].name.C_Str());
-        // print(&(Transforms[i]));
     }
-    // LOG("======================");
 }
 
 

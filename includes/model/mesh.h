@@ -22,17 +22,17 @@ struct Vertex {
     glm::vec3 Position;
     // normal
     glm::vec3 Normal;
-    // texCoords
-    glm::vec2 TexCoords;
+    // // texCoords
+    // glm::vec2 TexCoords;
 
-    glm::vec3 TexColor;
-    // tangent
-    glm::vec3 Tangent;
-    // bitangent
-    glm::vec3 Bitangent;
+    // glm::vec3 TexColor;
+    // // tangent
+    // glm::vec3 Tangent;
+    // // bitangent
+    // glm::vec3 Bitangent;
 
     float weight[MAX_POINT] = {0.0f};
-    int boneId[MAX_POINT] = {0};
+    uint boneId[MAX_POINT] = {0};
 
     void add(float w, int id)
     {
@@ -181,25 +181,37 @@ private:
         glEnableVertexAttribArray(1);	
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
         // vertex texture coords
-        glEnableVertexAttribArray(2);	
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-        // vertex texture colors
-        glEnableVertexAttribArray(3);	
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexColor));
-        // vertex tangent
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-        // vertex bitangent
-        glEnableVertexAttribArray(5);
-        glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-
-        glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, MAX_POINT, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
+        // glEnableVertexAttribArray(2);	
+        // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+        // // vertex texture colors
+        // glEnableVertexAttribArray(3);	
+        // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexColor));
+        // // vertex tangent
+        // glEnableVertexAttribArray(4);
+        // glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+        // // vertex bitangent
+        // glEnableVertexAttribArray(5);
+        // glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
         // Vertex vd;
-        // std::cout<< "offeset:" << offsetof(Vertex, weight) << " 2:"<< offsetof(Vertex, boneId) << " 3:"<< sizeof(vd.boneId) <<std::endl;
-        glEnableVertexAttribArray(7);
-        glVertexAttribIPointer(7, MAX_POINT, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
+        std::cout<< "bind-------" <<std::endl;
+
+        for (unsigned int k = 0; k < this->vertices.size(); k++)
+        {
+            if (!this->vertices[k].is_init())
+            {
+                std::cout << "w1:" << this->vertices[k].weight[0]<< "   b1:" << this->vertices[k].boneId[0];
+                std::cout << "      w2:" << this->vertices[k].weight[1]<< "  b2:" << this->vertices[k].boneId[1];
+                std::cout << "      w3:" << this->vertices[k].weight[2]<< "  b3:" << this->vertices[k].boneId[2];
+                std::cout << "      w4:" << this->vertices[k].weight[3]<< "  b4:" << this->vertices[k].boneId[3] << std::endl;
+            }
+        }
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, MAX_POINT, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribIPointer(3, MAX_POINT, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
 
         glBindVertexArray(0);
     }
