@@ -59,6 +59,7 @@ public:
     }
     
 private:
+    uint count{0};
     /*  Functions   */
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
     void loadModel(string const &path)
@@ -76,16 +77,17 @@ private:
         directory = path.substr(0, path.find_last_of('/'));
 
         m_GlobalInverseTransform = transByMat4(&(scene->mRootNode->mTransformation));
-        
         m_GlobalInverseTransform = glm::inverse(m_GlobalInverseTransform);
-        // print(&m_GlobalInverseTransform);
         // process ASSIMP's root node recursively
+        
         processNode(scene->mRootNode, scene);
     }
-
+    
     // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
     void processNode(aiNode *node, const aiScene *scene)
     {
+        count++;
+        // std::cout << "node c:" << count << "  mesh c:" << node->mNumMeshes << " nn:" << node->mName.C_Str() << std::endl;
         // process each mesh located at the current node
         for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
@@ -94,10 +96,7 @@ private:
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
             // if(!mesh->HasBones())
             //     continue;
-            Mesh* m = processMesh(mesh, scene);
-            meshes.push_back(m);
-            processBones(mesh, m);
-            
+            meshes.push_back(processMesh(mesh, scene));
         }
 
         // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
@@ -108,64 +107,10 @@ private:
 
     }
 
-    void processBones(aiMesh *aiMesh, Mesh* mesh)
-    {
-        // std::cout << "processBones======" << std::endl;
-        // if (aiMesh->HasBones())
-        // {
-        //     // std::cout << "has bones" << std::endl;
-        //     for (unsigned int m = 0; m < aiMesh->mNumBones; m++)
-        //     {
-        //         aiBone* aiBone = aiMesh->mBones[m];
-        //         Bone bone;
-        //         bone.id = m;
-        //         bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
-        //         bone.name = aiBone->mName;
-        //         bones.push_back(bone);
-        //         for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
-        //         {
-        //             aiVertexWeight weight = aiBone->mWeights[k];
-        //             mesh->vertices[weight.mVertexId].add(weight.mWeight, bone.id);
-        //         }
-        //     }
-        // }
-
-        // for (unsigned int k = 0; k < mesh->vertices.size(); k++)
-        // {
-        //     if (!mesh->vertices[k].is_init())
-        //     {
-        //         std::cout << "w1:" << mesh->vertices[k].weight[0]<< "   b1:" << mesh->vertices[k].boneId[0];
-        //         std::cout << "      w2:" << mesh->vertices[k].weight[1]<< "  b2:" << mesh->vertices[k].boneId[1];
-        //         std::cout << "      w3:" << mesh->vertices[k].weight[2]<< "  b3:" << mesh->vertices[k].boneId[2];
-        //         std::cout << "      w4:" << mesh->vertices[k].weight[3]<< "  b4:" << mesh->vertices[k].boneId[3] << std::endl;
-        //     }
-        // }
-
-        // for (unsigned int k = 0; k < mesh.vertices.size(); k++)
-        // {
-        //     std::cout << "w1:" << mesh->vertices[k].weight[0]<< "   b1:" << mesh->vertices[k].boneId[0];
-        //     std::cout << "      w2:" << mesh->vertices[k].weight[1]<< "  b2:" << mesh->vertices[k].boneId[1];
-        //     std::cout << "      w3:" << mesh->vertices[k].weight[2]<< "  b3:" << mesh->vertices[k].boneId[2];
-        //     std::cout << "      w4:" << mesh->vertices[k].weight[3]<< "  b4:" << mesh->vertices[k].boneId[3] << std::endl;
-
-        //     // int count = 0;
-        //     // for (uint m = 0; m < MAX_POINT; m++)
-        //     // {
-        //     //     if(mesh->vertices[k].weight[0] == 0.0f && mesh->vertices[k].boneId[0] == 0)
-        //     //     {
-        //     //         count++;
-        //     //     }
-        //     // }
-
-        //     // if(count == MAX_POINT)
-        //     // {
-        //     //     std::cout << "k:"<< k << std::endl;
-        //     // }
-        // }
-    }
-
     Mesh* processMesh(aiMesh *mesh, const aiScene *scene)
     {
+        // std::cout << "MESH c:" << mesh->mNumVertices << " BC:" << mesh->mNumBones <<std::endl;
+
         // data to fill
         vector<Vertex> vertices;
         vector<unsigned int> indices;
@@ -296,25 +241,23 @@ private:
         float s = 1;
         material->Get(AI_MATKEY_SHININESS, &s, NULL);
 
-        if (mesh->HasBones())
+        for (unsigned int m = 0; m < mesh->mNumBones; m++)
         {
-            // std::cout << "has bones" << std::endl;
-            for (unsigned int m = 0; m < mesh->mNumBones; m++)
+            aiBone* aiBone = mesh->mBones[m];
+            Bone bone;
+            bone.id = m;
+            bone.offset = aiBone->mOffsetMatrix;
+            bone.name = aiBone->mName;
+            bones.push_back(bone);
+            for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
             {
-                aiBone* aiBone = mesh->mBones[m];
-                Bone bone;
-                bone.id = m;
-                bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
-                bone.name = aiBone->mName;
-                bones.push_back(bone);
-                for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
-                {
-                    aiVertexWeight weight = aiBone->mWeights[k];
-                    vertices[weight.mVertexId].add(weight.mWeight, bone.id);
-                }
+                // aiVertexWeight weight = aiBone->mWeights[k];
+
+                // std::cout << "1:" << &weight << "  2:" << &(aiBone->mWeights[k]) << std::endl;
+                vertices[aiBone->mWeights[k].mVertexId].add(aiBone->mWeights[k].mWeight, bone.id);
             }
         }
-        
+
         return new Mesh(vertices, indices, textures, diffuse, specular, ambient, s);
     }
 

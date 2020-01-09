@@ -32,7 +32,7 @@ void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNode
 void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
 void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
 void ReadNodeHeirarchy(Model* model, float AnimationTime, const aiNode* pNode, const glm::mat4& ParentTransform);
-void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transforms);
+void BoneTransform(Model* model, float TimeInSeconds, vector<aiMatrix4x4>& Transforms);
 const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName);
 
 #define LOG(M) std::cout << "log:" << (M) << std::endl;
@@ -118,7 +118,7 @@ int main()
     ourShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     ourShader.setVec3("light.position", glm::vec3(100.0f, 100.0f, 100.0f));
 
-    vector<glm::mat4> Transforms;
+    vector<aiMatrix4x4> Transforms;
     vector<string> boneLocations;
 
     for (int i = 0; i < 100; i++)
@@ -157,7 +157,8 @@ int main()
         for (uint i = 0 ; i < Transforms.size() && i < 100 ; i++) {
             // LOG(boneLocations[i]);
             // print_inline(&Transforms[i]);
-            ourShader.setMat4(boneLocations[i], Transforms[i]);
+            // ourShader.setMat4Ordering(boneLocations[i].c_str(), Transforms[i]);
+            glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, boneLocations[i].c_str()), 1, GL_TRUE, &Transforms[i][0][0]);
         }
 
         ourShader.setVec3("viewPos", camera.Position);
@@ -254,7 +255,18 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT)
-        hold_press = action == GLFW_PRESS;
+    {
+        if(action == GLFW_PRESS)
+        {
+            hold_press = true;
+        }
+        else 
+        {
+            hold_press = false;
+            firstMouse = true;
+        }
+    }
+        
 }
 
 long long GetCurrentTimeMillis()
@@ -378,12 +390,12 @@ void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeA
 }
 
 
-void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const glm::mat4& ParentTransform)
+void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const aiMatrix4x4& ParentTransform)
 {    
     const aiAnimation* pAnimation = model->scene->mAnimations[0];
         
-    glm::mat4 NodeTransformation;
-    transByMat4(&NodeTransformation, &pNode->mTransformation);
+    aiMatrix4x4 NodeTransformation(pNode->mTransformation);
+    // transByMat4(&NodeTransformation, &pNode->mTransformation);
      
     const aiNodeAnim* pNodeAnim = FindNodeAnim(pAnimation, pNode->mName);
     
@@ -391,27 +403,28 @@ void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const g
         // Interpolate scaling and generate scaling transformation matrix
         aiVector3D Scaling;
         CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
-        glm::mat4 ScalingM = initScaleTransform(Scaling.x, Scaling.y, Scaling.z);
+        aiMatrix4x4 ScalingM = initScaleTransformAI(Scaling.x, Scaling.y, Scaling.z);
         
         // Interpolate rotation and generate rotation transformation matrix
         aiQuaternion RotationQ;
         CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);        
-        glm::mat4 RotationM = transByMat3(RotationQ.GetMatrix());
+        aiMatrix4x4 RotationM = transByMat3AI(RotationQ.GetMatrix());
 
         // Interpolate translation and generate translation transformation matrix
         aiVector3D Translation;
         CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
-        glm::mat4 TranslationM = initTranslationTransform(Translation.x, Translation.y, Translation.z);
+        aiMatrix4x4 TranslationM = initTranslationTransformAI(Translation.x, Translation.y, Translation.z);
         
         // Combine the above transformations
         NodeTransformation = TranslationM * RotationM * ScalingM;
     }
        
-    glm::mat4 GlobalTransformation = ParentTransform * NodeTransformation;
+    aiMatrix4x4 GlobalTransformation = ParentTransform * NodeTransformation;
     for (uint i = 0 ; i < model->bones.size() ; i++) {
         if (model->bones[i].name == pNode->mName)
         {
-            model->bones[i].finalOffset = (model->m_GlobalInverseTransform) * GlobalTransformation * (model->bones[i].offset);
+            // model->bones[i].finalOffset = (model->m_GlobalInverseTransform) * GlobalTransformation * (model->bones[i].offset);
+            model->bones[i].finalOffset = GlobalTransformation * (model->bones[i].offset);
         }
     }
     
@@ -421,9 +434,10 @@ void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const g
 }
 
 
-void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transforms)
+void BoneTransform(Model* model, float TimeInSeconds, vector<aiMatrix4x4>& Transforms)
 {
-    glm::mat4 Identity = init();
+    // glm::mat4 Identity = init();
+    aiMatrix4x4 Identity = initAI();
     
     float TicksPerSecond = (float)(model->scene->mAnimations[0]->mTicksPerSecond != 0 ? model->scene->mAnimations[0]->mTicksPerSecond : 25.0f);
     float TimeInTicks = TimeInSeconds * TicksPerSecond;

@@ -34,18 +34,8 @@ struct Vertex {
     float weight[MAX_POINT] = {0.0f};
     uint boneId[MAX_POINT] = {0};
 
-    void add(float w, int id)
+    void add(float w, uint id)
     {
-        if (w <= 0.0f) return;
-
-        for (uint i = 0; i < MAX_POINT; i++)
-        {
-            if (weight[i] == w && boneId[i] == id)
-            {
-                return;
-            }
-        }
-
         for (uint i = 0; i < MAX_POINT; i++)
         {
             if(weight[i] == 0.0f)
@@ -66,8 +56,8 @@ struct Vertex {
 struct Bone{
     unsigned int id;
     aiString name;
-    glm::mat4 offset;
-    glm::mat4 finalOffset;
+    aiMatrix4x4 offset;
+    aiMatrix4x4 finalOffset;
 };
 
 struct Texture {
@@ -194,18 +184,18 @@ private:
         // glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
         // Vertex vd;
-        std::cout<< "bind-------" <<std::endl;
+        // std::cout<< "bind-------" <<std::endl;
 
-        for (unsigned int k = 0; k < this->vertices.size(); k++)
-        {
-            if (!this->vertices[k].is_init())
-            {
-                std::cout << "w1:" << this->vertices[k].weight[0]<< "   b1:" << this->vertices[k].boneId[0];
-                std::cout << "      w2:" << this->vertices[k].weight[1]<< "  b2:" << this->vertices[k].boneId[1];
-                std::cout << "      w3:" << this->vertices[k].weight[2]<< "  b3:" << this->vertices[k].boneId[2];
-                std::cout << "      w4:" << this->vertices[k].weight[3]<< "  b4:" << this->vertices[k].boneId[3] << std::endl;
-            }
-        }
+        // for (unsigned int k = 0; k < this->vertices.size(); k++)
+        // {
+        //     if (!this->vertices[k].is_init())
+        //     {
+        //         std::cout << "w1:" << this->vertices[k].weight[0]<< "   b1:" << this->vertices[k].boneId[0];
+        //         std::cout << "      w2:" << this->vertices[k].weight[1]<< "  b2:" << this->vertices[k].boneId[1];
+        //         std::cout << "      w3:" << this->vertices[k].weight[2]<< "  b3:" << this->vertices[k].boneId[2];
+        //         std::cout << "      w4:" << this->vertices[k].weight[3]<< "  b4:" << this->vertices[k].boneId[3] << std::endl;
+        //     }
+        // }
 
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, MAX_POINT, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
