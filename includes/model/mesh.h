@@ -15,6 +15,8 @@
 #include <vector>
 using namespace std;
 
+const int MAX_POINT = 4;
+
 struct Vertex {
     // position
     glm::vec3 Position;
@@ -29,8 +31,36 @@ struct Vertex {
     // bitangent
     glm::vec3 Bitangent;
 
-    vector<float> weight;
-    vector<int> boneId;
+    float weight[MAX_POINT] = {0.0f};
+    int boneId[MAX_POINT] = {0};
+
+    void add(float w, int id)
+    {
+        if (w <= 0.0f) return;
+
+        for (uint i = 0; i < MAX_POINT; i++)
+        {
+            if (weight[i] == w && boneId[i] == id)
+            {
+                return;
+            }
+        }
+
+        for (uint i = 0; i < MAX_POINT; i++)
+        {
+            if(weight[i] == 0.0f)
+            {
+                weight[i] = w;
+                boneId[i] = id;
+                break;
+            }
+        }
+    }
+
+    bool is_init()
+    {
+        return weight[0] == 0.0f && boneId[0] == 0;
+    }
 };
 
 struct Bone{
@@ -164,10 +194,12 @@ private:
         glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
         glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
+        glVertexAttribPointer(6, MAX_POINT, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
 
+        // Vertex vd;
+        // std::cout<< "offeset:" << offsetof(Vertex, weight) << " 2:"<< offsetof(Vertex, boneId) << " 3:"<< sizeof(vd.boneId) <<std::endl;
         glEnableVertexAttribArray(7);
-        glVertexAttribIPointer(7, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
+        glVertexAttribIPointer(7, MAX_POINT, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
 
         glBindVertexArray(0);
     }

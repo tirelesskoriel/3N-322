@@ -35,6 +35,8 @@ void ReadNodeHeirarchy(Model* model, float AnimationTime, const aiNode* pNode, c
 void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transforms);
 const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName);
 
+#define LOG(M) std::cout << "log:" << (M) << std::endl;
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -153,13 +155,14 @@ int main()
         BoneTransform(&ourModel, RunningTime, Transforms);
         
         for (uint i = 0 ; i < Transforms.size() && i < 100 ; i++) {
+            // LOG(boneLocations[i]);
+            // print_inline(&Transforms[i]);
             ourShader.setMat4(boneLocations[i], Transforms[i]);
         }
 
         ourShader.setVec3("viewPos", camera.Position);
-        float time = (float)glfwGetTime();
-        ourShader.setVec3("light.position", glm::vec3(sinf(time), 0.0f, -cosf(time)));
-
+        // float time = (float)glfwGetTime();
+        // ourShader.setVec3("light.position", glm::vec3(sinf(time), 0.0f, -cosf(time)));
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -168,7 +171,7 @@ int main()
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -2.0f, -2.0f)); // translate it down so it's at the center of the scene
+        model = glm::translate(model, glm::vec3(0.0f, -0.5f, -0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         // mat3(transpose(inverse(model)))
@@ -405,12 +408,14 @@ void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const g
     }
        
     glm::mat4 GlobalTransformation = ParentTransform * NodeTransformation;
-    
     for (uint i = 0 ; i < model->bones.size() ; i++) {
-        Bone bone = model->bones[i];
-        if (bone.name == pNode->mName)
+        // Bone bone = model->bones[i];
+        if (model->bones[i].name == pNode->mName)
         {
-            bone.finalOffset = (model->m_GlobalInverseTransform) * GlobalTransformation * (bone.offset);
+            // print(&(model->m_GlobalInverseTransform));
+            model->bones[i].finalOffset = (model->m_GlobalInverseTransform) * GlobalTransformation * (model->bones[i].offset);
+            // LOG(model->bones[i].name.C_Str());
+            // print(&(model->bones[i].finalOffset));
         }
     }
     
@@ -428,13 +433,18 @@ void BoneTransform(Model* model, float TimeInSeconds, vector<glm::mat4>& Transfo
     float TimeInTicks = TimeInSeconds * TicksPerSecond;
     float AnimationTime = fmod(TimeInTicks, (float)model->scene->mAnimations[0]->mDuration);
 
-    ReadNodeHeirarchy(model, AnimationTime, model->scene->mRootNode, Identity);
+    // LOG(AnimationTime);
 
+    ReadNodeHeirarchy(model, AnimationTime, model->scene->mRootNode, Identity);
+    // LOG("--------------------");
     Transforms.resize(model->bones.size());
 
     for (uint i = 0 ; i < model->bones.size() ; i++) {
         Transforms[i] = model->bones[i].finalOffset;
+        // LOG(model->bones[i].name.C_Str());
+        // print(&(Transforms[i]));
     }
+    // LOG("======================");
 }
 
 

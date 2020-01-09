@@ -68,7 +68,10 @@ private:
         // retrieve the directory path of the filepath
         directory = path.substr(0, path.find_last_of('/'));
 
-        m_GlobalInverseTransform = transByMat4(&(scene->mRootNode->mTransformation.Inverse()));
+        m_GlobalInverseTransform = transByMat4(&(scene->mRootNode->mTransformation));
+        
+        m_GlobalInverseTransform = glm::inverse(m_GlobalInverseTransform);
+        // print(&m_GlobalInverseTransform);
         // process ASSIMP's root node recursively
         processNode(scene->mRootNode, scene);
     }
@@ -99,45 +102,42 @@ private:
     {
         if (aiMesh->HasBones())
         {
+            // std::cout << "-------------" << std::endl;
             // aiVertexWeight w = aiMesh->mBones[0]->mWeights[0];
             // mesh->vertices[w.mVertexId].weight.push_back(w.mWeight);
+            
             for (unsigned int m = 0; m < aiMesh->mNumBones; m++)
             {
                 aiBone* aiBone = aiMesh->mBones[m];
+                // std::cout << "-------------" << aiMesh->mBones[m]->mName.C_Str() << "  "<< aiMesh->mBones[m]->mNumWeights << std::endl;
                 Bone bone;
                 bone.id = m;
                 bone.offset = transByMat4(&(aiBone->mOffsetMatrix));
                 bone.name = aiBone->mName;
                 bones.push_back(bone);
-                
                 for (unsigned int k = 0; k < aiBone->mNumWeights; k++)
                 {
-                    // std::cout << "dddddddddd   " << aiBone->mWeights[k].mVertexId << std::endl;
                     aiVertexWeight weight = aiBone->mWeights[k];
-                    mesh->vertices[weight.mVertexId].weight.push_back(weight.mWeight);
-                    mesh->vertices[weight.mVertexId].boneId.push_back(bone.id);
-                }
-            }
-        }
-
-        for (unsigned int k = 0; k < mesh->vertices.size(); k++)
-        {
-            int r = 4 - mesh->vertices[k].weight.size();
-            if (r > 0)
-            {
-                for (int i = 0 ; i < 5; i++)
-                {
-                    mesh->vertices[k].weight.push_back(0.0f);
+                    mesh->vertices[weight.mVertexId].add(weight.mWeight, bone.id);
                 }
             }
 
-            r = 4 - mesh->vertices[k].boneId.size();
-            if (r > 0)
+            for (unsigned int k = 0; k < mesh->vertices.size(); k++)
             {
-                for (int i = 0 ; i < 5; i++)
-                {
-                    mesh->vertices[k].boneId.push_back(1);
-                }
+                int count = 0;
+                    
+                std::cout << "w1:" << mesh->vertices[k].weight[0]<< "   b1:" << mesh->vertices[k].boneId[0];
+                std::cout << "      w2:" << mesh->vertices[k].weight[1]<< "  b2:" << mesh->vertices[k].boneId[1];
+                std::cout << "      w3:" << mesh->vertices[k].weight[2]<< "  b3:" << mesh->vertices[k].boneId[2];
+                std::cout << "      w4:" << mesh->vertices[k].weight[3]<< "  b4:" << mesh->vertices[k].boneId[3] << std::endl;
+                    // if(mesh->vertices[k].weight[j] == 0.0f && mesh->vertices[k].boneId[j] == 0)
+                    // {
+                    //     count++;
+                    // }
+
+                // if(count == MAX_POINT){
+                //     std::cout << "null vvvv:" << k << std::endl;
+                // }
             }
         }
     }
