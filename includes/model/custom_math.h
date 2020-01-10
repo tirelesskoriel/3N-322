@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <assimp/scene.h>
+#include <iostream>
 
 glm::mat4 transByMat4(const aiMatrix4x4* aim4)
 {

@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #include <string>
 #include <assimp/scene.h>
+#include <sstream>
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -32,7 +33,7 @@ void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNode
 void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
 void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
 void ReadNodeHeirarchy(Model* model, float AnimationTime, const aiNode* pNode, const glm::mat4& ParentTransform);
-void BoneTransform(Model* model, float TimeInSeconds, vector<aiMatrix4x4>& Transforms);
+void BoneTransform(Model* model, float TimeInSeconds, std::vector<aiMatrix4x4>& Transforms);
 const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName);
 
 #define LOG(M) std::cout << "log:" << (M) << std::endl;
@@ -118,12 +119,12 @@ int main()
     ourShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     ourShader.setVec3("light.position", glm::vec3(100.0f, 100.0f, 100.0f));
 
-    vector<aiMatrix4x4> Transforms;
-    vector<string> boneLocations;
+    std::vector<aiMatrix4x4> Transforms;
+    std::vector<std::string> boneLocations;
 
     for (int i = 0; i < 100; i++)
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << "gBones[" << i << "]";
         boneLocations.push_back(ss.str());
     }
@@ -434,7 +435,7 @@ void ReadNodeHeirarchy(Model* model, float AnimationTime, aiNode* pNode, const a
 }
 
 
-void BoneTransform(Model* model, float TimeInSeconds, vector<aiMatrix4x4>& Transforms)
+void BoneTransform(Model* model, float TimeInSeconds, std::vector<aiMatrix4x4>& Transforms)
 {
     // glm::mat4 Identity = init();
     aiMatrix4x4 Identity = initAI();

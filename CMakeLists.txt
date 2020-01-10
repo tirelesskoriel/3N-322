@@ -65,6 +65,7 @@ aux_source_directory("src/" SRC)
 aux_source_directory("src/glad/" SRC)
 aux_source_directory("src/stdimage/" SRC)
 aux_source_directory("src/tools/" SRC)
+aux_source_directory("src/model/" SRC)
 add_executable(${NAME} ${SRC})
 target_link_libraries(${NAME} ${LIBS})
 
