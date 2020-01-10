@@ -52,6 +52,7 @@ void Mesh::Draw(ShaderLoader shader)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
         // retrieve texture number (the N in diffuse_textureN)
+        std::string pre("material.");
         std::string number;
         std::string name = textures[i].type;
         if(name == "texture_diffuse")
@@ -64,7 +65,7 @@ void Mesh::Draw(ShaderLoader shader)
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
                                                     // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader.ID, (pre + name + number).c_str()), i);
         // and finally bind the texture
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
@@ -108,19 +109,7 @@ void Mesh::setupMesh()
     // vertex normals
     glEnableVertexAttribArray(1);	
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-    // vertex texture coords
-    // glEnableVertexAttribArray(2);	
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-    // // vertex texture colors
-    // glEnableVertexAttribArray(3);	
-    // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexColor));
-    // // vertex tangent
-    // glEnableVertexAttribArray(4);
-    // glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-    // // vertex bitangent
-    // glEnableVertexAttribArray(5);
-    // glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-
+    
     // Vertex vd;
     // std::cout<< "bind-------" <<std::endl;
 
@@ -151,5 +140,19 @@ void Mesh::setupMesh()
     glEnableVertexAttribArray(5);
     glVertexAttribIPointer(5, MAX_POINT/2, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId) + (sizeof(Vertex) - offsetof(Vertex, boneId)) / 2));
 
+    // vertex texture coords
+    glEnableVertexAttribArray(6);	
+    glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+    // vertex texture colors
+    glEnableVertexAttribArray(7);	
+    glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexColor));
+    // vertex tangent
+    glEnableVertexAttribArray(8);
+    glVertexAttribPointer(8, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+    // vertex bitangent
+    glEnableVertexAttribArray(9);
+    glVertexAttribPointer(9, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+
+    
     glBindVertexArray(0);
 }

@@ -43,9 +43,9 @@ private:
     unsigned int FindPosition(float AnimationTime, const aiNodeAnim* pNodeAnim);
     unsigned int FindRotation(float AnimationTime, const aiNodeAnim* pNodeAnim);
     unsigned int FindScaling(float AnimationTime, const aiNodeAnim* pNodeAnim);
-    void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
-    void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
-    void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+    bool CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+    bool CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+    bool CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
     void ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const aiMatrix4x4& ParentTransform);
     void BoneTransform(float TimeInSeconds, std::vector<aiMatrix4x4>& Transforms);
     const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName);

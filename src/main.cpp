@@ -74,9 +74,12 @@ int main()
     glEnable(GL_MULTISAMPLE);
 
 
-    // Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
+    Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/mg/source/MANTA2.fbx"));
-    Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/dd/gedou.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/ignore/Nv_JianKe/NnJianKe_Delete Light UV_Mod.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/ignore/r/robot.FBX"));
     // Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"));
 
     std::string vs("static_model.vs");

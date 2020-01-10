@@ -18,7 +18,7 @@
 #include <vector>
 #include <sys/time.h>
 #include <model/custom_math.h>
-#include <tools/class_tools.h>
+#include <tools/syntax_sugar.h>
 
 Model::Model(std::string const &path, bool gamma) : gammaCorrection(gamma)
 {
@@ -116,49 +116,50 @@ Mesh* Model::processMesh(aiMesh *mesh, const aiScene *scene)
         vector.y = mesh->mNormals[i].y;
         vector.z = mesh->mNormals[i].z;
         vertex.Normal = vector;
-        // texture coordinates
-        // if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-        // {
-        //     glm::vec2 vec;
-        //     // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
-        //     // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-        //     vec.x = mesh->mTextureCoords[0][i].x; 
-        //     vec.y = mesh->mTextureCoords[0][i].y;
 
-        //     vertex.TexCoords = vec;
-        // }
-        // else
-        //     vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+        // texture coordinates
+        if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+        {
+            glm::vec2 vec;
+            // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+            vec.x = mesh->mTextureCoords[0][i].x; 
+            vec.y = mesh->mTextureCoords[0][i].y;
+
+            vertex.TexCoords = vec;
+        }
+        else
+            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
         
 
-        // if(mesh->mTangents)
-        // {
-        //     // tangent
-        //     vector.x = mesh->mTangents[i].x;
-        //     vector.y = mesh->mTangents[i].y;
-        //     vector.z = mesh->mTangents[i].z;
-        //     vertex.Tangent = vector;
-        // }
+        if(mesh->mTangents)
+        {
+            // tangent
+            vector.x = mesh->mTangents[i].x;
+            vector.y = mesh->mTangents[i].y;
+            vector.z = mesh->mTangents[i].z;
+            vertex.Tangent = vector;
+        }
 
-        // if(mesh->mBitangents)
-        // {
-        //     // bitangent
-        //     vector.x = mesh->mBitangents[i].x;
-        //     vector.y = mesh->mBitangents[i].y;
-        //     vector.z = mesh->mBitangents[i].z;
-        //     vertex.Bitangent = vector;
-        // }
+        if(mesh->mBitangents)
+        {
+            // bitangent
+            vector.x = mesh->mBitangents[i].x;
+            vector.y = mesh->mBitangents[i].y;
+            vector.z = mesh->mBitangents[i].z;
+            vertex.Bitangent = vector;
+        }
 
-        // for(int j = 0 ; j < AI_MAX_NUMBER_OF_COLOR_SETS; j++)
-        // {
-        //     if(mesh->HasVertexColors(j))
-        //     {
-        //         vector.x = mesh->mColors[j][i].r;
-        //         vector.y = mesh->mColors[j][i].g;
-        //         vector.z = mesh->mColors[j][i].b;
-        //         vertex.TexColor = vector;
-        //     }
-        // }
+        for(int j = 0 ; j < AI_MAX_NUMBER_OF_COLOR_SETS; j++)
+        {
+            if(mesh->HasVertexColors(j))
+            {
+                vector.x = mesh->mColors[j][i].r;
+                vector.y = mesh->mColors[j][i].g;
+                vector.z = mesh->mColors[j][i].b;
+                vertex.TexColor = vector;
+            }
+        }
         
         vertices.push_back(vertex);
     }
@@ -326,8 +327,7 @@ unsigned int Model::FindPosition(float AnimationTime, const aiNodeAnim* pNodeAni
             return i;
         }
     }
-    assert(0);
-
+    // assert(0);
     return 0;
 }
 
@@ -341,9 +341,7 @@ unsigned int Model::FindRotation(float AnimationTime, const aiNodeAnim* pNodeAni
             return i;
         }
     }
-    
-    assert(0);
-
+    // assert(0);
     return 0;
 }
 
@@ -357,18 +355,16 @@ unsigned int Model::FindScaling(float AnimationTime, const aiNodeAnim* pNodeAnim
             return i;
         }
     }
-    
-    assert(0);
-
+    // assert(0);
     return 0;
 }
 
 
-void Model::CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+bool Model::CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
 {
     if (pNodeAnim->mNumPositionKeys == 1) {
         Out = pNodeAnim->mPositionKeys[0].mValue;
-        return;
+        return true;
     }
             
     uint PositionIndex = FindPosition(AnimationTime, pNodeAnim);
@@ -376,20 +372,22 @@ void Model::CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const
     assert(NextPositionIndex < pNodeAnim->mNumPositionKeys);
     float DeltaTime = (float)(pNodeAnim->mPositionKeys[NextPositionIndex].mTime - pNodeAnim->mPositionKeys[PositionIndex].mTime);
     float Factor = (AnimationTime - (float)pNodeAnim->mPositionKeys[PositionIndex].mTime) / DeltaTime;
-    assert(Factor >= 0.0f && Factor <= 1.0f);
+    // assert(Factor >= 0.0f && Factor <= 1.0f);
     const aiVector3D& Start = pNodeAnim->mPositionKeys[PositionIndex].mValue;
     const aiVector3D& End = pNodeAnim->mPositionKeys[NextPositionIndex].mValue;
     aiVector3D Delta = End - Start;
     Out = Start + Factor * Delta;
+
+    return Factor >= 0.0f && Factor <= 1.0f;
 }
 
 
-void Model::CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+bool Model::CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
 {
 	// we need at least two values to interpolate...
     if (pNodeAnim->mNumRotationKeys == 1) {
         Out = pNodeAnim->mRotationKeys[0].mValue;
-        return;
+        return true;
     }
     
     uint RotationIndex = FindRotation(AnimationTime, pNodeAnim);
@@ -397,19 +395,21 @@ void Model::CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, con
     assert(NextRotationIndex < pNodeAnim->mNumRotationKeys);
     float DeltaTime = (float)(pNodeAnim->mRotationKeys[NextRotationIndex].mTime - pNodeAnim->mRotationKeys[RotationIndex].mTime);
     float Factor = (AnimationTime - (float)pNodeAnim->mRotationKeys[RotationIndex].mTime) / DeltaTime;
-    assert(Factor >= 0.0f && Factor <= 1.0f);
+    // assert(Factor >= 0.0f && Factor <= 1.0f);
     const aiQuaternion& StartRotationQ = pNodeAnim->mRotationKeys[RotationIndex].mValue;
     const aiQuaternion& EndRotationQ   = pNodeAnim->mRotationKeys[NextRotationIndex].mValue;    
     aiQuaternion::Interpolate(Out, StartRotationQ, EndRotationQ, Factor);
     Out = Out.Normalize();
+
+    return Factor >= 0.0f && Factor <= 1.0f;
 }
 
 
-void Model::CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+bool Model::CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
 {
     if (pNodeAnim->mNumScalingKeys == 1) {
         Out = pNodeAnim->mScalingKeys[0].mValue;
-        return;
+        return true;
     }
 
     uint ScalingIndex = FindScaling(AnimationTime, pNodeAnim);
@@ -417,11 +417,13 @@ void Model::CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const 
     assert(NextScalingIndex < pNodeAnim->mNumScalingKeys);
     float DeltaTime = (float)(pNodeAnim->mScalingKeys[NextScalingIndex].mTime - pNodeAnim->mScalingKeys[ScalingIndex].mTime);
     float Factor = (AnimationTime - (float)pNodeAnim->mScalingKeys[ScalingIndex].mTime) / DeltaTime;
-    assert(Factor >= 0.0f && Factor <= 1.0f);
+    // assert(Factor >= 0.0f && Factor <= 1.0f);
     const aiVector3D& Start = pNodeAnim->mScalingKeys[ScalingIndex].mValue;
     const aiVector3D& End   = pNodeAnim->mScalingKeys[NextScalingIndex].mValue;
     aiVector3D Delta = End - Start;
     Out = Start + Factor * Delta;
+
+    return Factor >= 0.0f && Factor <= 1.0f;
 }
 
 
@@ -434,31 +436,33 @@ void Model::ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const ai
      
     const aiNodeAnim* pNodeAnim = FindNodeAnim(pAnimation, pNode->mName);
     
+    bool skip = false;
     if (pNodeAnim) {
         // Interpolate scaling and generate scaling transformation matrix
         aiVector3D Scaling;
-        CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
+        skip = !CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
         aiMatrix4x4 ScalingM = initScaleTransformAI(Scaling.x, Scaling.y, Scaling.z);
         
         // Interpolate rotation and generate rotation transformation matrix
         aiQuaternion RotationQ;
-        CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);        
+        skip = !CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);        
         aiMatrix4x4 RotationM = transByMat3AI(RotationQ.GetMatrix());
 
         // Interpolate translation and generate translation transformation matrix
         aiVector3D Translation;
-        CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
+        skip = !CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
         aiMatrix4x4 TranslationM = initTranslationTransformAI(Translation.x, Translation.y, Translation.z);
         
         // Combine the above transformations
         NodeTransformation = TranslationM * RotationM * ScalingM;
     }
-       
+    
     aiMatrix4x4 GlobalTransformation = ParentTransform * NodeTransformation;
     for (unsigned int i = 0 ; i < bones.size() ; i++) {
         if (bones[i].name == pNode->mName)
         {
             bones[i].finalOffset = GlobalTransformation * (bones[i].offset);
+            bones[i].skipTime = skip;
         }
     }
     
@@ -480,9 +484,18 @@ void Model::BoneTransform(float TimeInSeconds, std::vector<aiMatrix4x4>& Transfo
     ReadNodeHeirarchy(AnimationTime, scene->mRootNode, Identity);
     Transforms.resize(bones.size());
 
+    bool is_error = false;
     for (unsigned int i = 0 ; i < bones.size() ; i++) {
+        if(bones[i].skipTime)
+        {
+            is_error = true;
+            continue;
+        };
         Transforms[i] = bones[i].finalOffset;
     }
+
+    if (is_error)
+        WARNING_LOG("ERROR FRAME! ", AnimationTime);
 }
 
 

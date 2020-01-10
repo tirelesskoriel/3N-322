@@ -13,10 +13,10 @@ const int MAX_POINT = 8;
 struct Vertex {
     glm::vec3 Position;
     glm::vec3 Normal;
-    // glm::vec2 TexCoords;
-    // glm::vec3 TexColor;
-    // glm::vec3 Tangent;
-    // glm::vec3 Bitangent;
+    glm::vec2 TexCoords;
+    glm::vec3 TexColor;
+    glm::vec3 Tangent;
+    glm::vec3 Bitangent;
     float weight[MAX_POINT] = {0.0f};
     unsigned int boneId[MAX_POINT] = {0};
 
@@ -29,6 +29,7 @@ struct Bone{
     aiString name;
     aiMatrix4x4 offset;
     aiMatrix4x4 finalOffset;
+    bool skipTime;
 };
 
 struct Texture {
