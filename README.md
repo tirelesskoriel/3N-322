@@ -9,7 +9,7 @@
 
 目标是达成《死亡细胞》等同效果。
 
-----------
+
 
 `Not good` `Not universal` `Not cross-platform `
 
@@ -24,7 +24,7 @@ The goal is to achieve the equivalent of "Dead Cell".
 
 English no good, Translate by Google. :smile:
 
-----------
+
 
 ## 2020.01.08
 
@@ -34,7 +34,7 @@ obj 模型 & ADS光照
 
 下一步: fbx 动画渲染
 
-----------
+
 ## 2020.01.10
 
 fbx 动画渲染
