@@ -16,9 +16,20 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <sys/time.h>
+#include <model/custom_math.h>
 
 Model::Model(std::string const &path, bool gamma) : gammaCorrection(gamma)
 {
+    m_startTime = GetCurrentTimeMillis();
+
+    for (int i = 0; i < 100; i++)
+    {
+        std::stringstream ss;
+        ss << "gBones[" << i << "]";
+        boneLocations.push_back(ss.str());
+    }
+
     loadModel(path);
 }
 
@@ -34,6 +45,15 @@ void Model::Draw(ShaderLoader shader)
 {
     for(unsigned int i = 0; i < meshes.size(); i++)
         meshes[i]->Draw(shader);
+}
+
+void Model::runAnimator(ShaderLoader shader)
+{
+    float RunningTime = GetRunningTime();
+    BoneTransform(RunningTime, Transforms);
+    for (uint i = 0 ; i < Transforms.size() && i < 100 ; i++) {
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, boneLocations[i].c_str()), 1, GL_TRUE, &Transforms[i][0][0]);
+    }
 }
 
 void Model::loadModel(std::string const &path)
@@ -149,7 +169,7 @@ Mesh* Model::processMesh(aiMesh *mesh, const aiScene *scene)
 
     std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
     textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    
+
     std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
@@ -270,4 +290,199 @@ unsigned int Model::TextureFromFile(const char *path, const std::string &directo
     }
 
     return textureID;
+}
+
+long long Model::GetCurrentTimeMillis()
+{
+    timeval t;
+    gettimeofday(&t, NULL);
+
+    long long ret = t.tv_sec * 1000 + t.tv_usec / 1000;
+    return ret;
+}
+
+float Model::GetRunningTime()
+{
+    float RunningTime = (float)((double)GetCurrentTimeMillis() - (double)m_startTime) / 1000.0f;
+    return RunningTime;
+}
+
+unsigned int Model::FindPosition(float AnimationTime, const aiNodeAnim* pNodeAnim)
+{    
+    for (uint i = 0 ; i < pNodeAnim->mNumPositionKeys - 1 ; i++) {
+        if (AnimationTime < (float)pNodeAnim->mPositionKeys[i + 1].mTime) {
+            return i;
+        }
+    }
+    assert(0);
+
+    return 0;
+}
+
+
+unsigned int Model::FindRotation(float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    assert(pNodeAnim->mNumRotationKeys > 0);
+
+    for (uint i = 0 ; i < pNodeAnim->mNumRotationKeys - 1 ; i++) {
+        if (AnimationTime < (float)pNodeAnim->mRotationKeys[i + 1].mTime) {
+            return i;
+        }
+    }
+    
+    assert(0);
+
+    return 0;
+}
+
+
+unsigned int Model::FindScaling(float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    assert(pNodeAnim->mNumScalingKeys > 0);
+    
+    for (uint i = 0 ; i < pNodeAnim->mNumScalingKeys - 1 ; i++) {
+        if (AnimationTime < (float)pNodeAnim->mScalingKeys[i + 1].mTime) {
+            return i;
+        }
+    }
+    
+    assert(0);
+
+    return 0;
+}
+
+
+void Model::CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    if (pNodeAnim->mNumPositionKeys == 1) {
+        Out = pNodeAnim->mPositionKeys[0].mValue;
+        return;
+    }
+            
+    uint PositionIndex = FindPosition(AnimationTime, pNodeAnim);
+    uint NextPositionIndex = (PositionIndex + 1);
+    assert(NextPositionIndex < pNodeAnim->mNumPositionKeys);
+    float DeltaTime = (float)(pNodeAnim->mPositionKeys[NextPositionIndex].mTime - pNodeAnim->mPositionKeys[PositionIndex].mTime);
+    float Factor = (AnimationTime - (float)pNodeAnim->mPositionKeys[PositionIndex].mTime) / DeltaTime;
+    assert(Factor >= 0.0f && Factor <= 1.0f);
+    const aiVector3D& Start = pNodeAnim->mPositionKeys[PositionIndex].mValue;
+    const aiVector3D& End = pNodeAnim->mPositionKeys[NextPositionIndex].mValue;
+    aiVector3D Delta = End - Start;
+    Out = Start + Factor * Delta;
+}
+
+
+void Model::CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+	// we need at least two values to interpolate...
+    if (pNodeAnim->mNumRotationKeys == 1) {
+        Out = pNodeAnim->mRotationKeys[0].mValue;
+        return;
+    }
+    
+    uint RotationIndex = FindRotation(AnimationTime, pNodeAnim);
+    uint NextRotationIndex = (RotationIndex + 1);
+    assert(NextRotationIndex < pNodeAnim->mNumRotationKeys);
+    float DeltaTime = (float)(pNodeAnim->mRotationKeys[NextRotationIndex].mTime - pNodeAnim->mRotationKeys[RotationIndex].mTime);
+    float Factor = (AnimationTime - (float)pNodeAnim->mRotationKeys[RotationIndex].mTime) / DeltaTime;
+    assert(Factor >= 0.0f && Factor <= 1.0f);
+    const aiQuaternion& StartRotationQ = pNodeAnim->mRotationKeys[RotationIndex].mValue;
+    const aiQuaternion& EndRotationQ   = pNodeAnim->mRotationKeys[NextRotationIndex].mValue;    
+    aiQuaternion::Interpolate(Out, StartRotationQ, EndRotationQ, Factor);
+    Out = Out.Normalize();
+}
+
+
+void Model::CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim)
+{
+    if (pNodeAnim->mNumScalingKeys == 1) {
+        Out = pNodeAnim->mScalingKeys[0].mValue;
+        return;
+    }
+
+    uint ScalingIndex = FindScaling(AnimationTime, pNodeAnim);
+    uint NextScalingIndex = (ScalingIndex + 1);
+    assert(NextScalingIndex < pNodeAnim->mNumScalingKeys);
+    float DeltaTime = (float)(pNodeAnim->mScalingKeys[NextScalingIndex].mTime - pNodeAnim->mScalingKeys[ScalingIndex].mTime);
+    float Factor = (AnimationTime - (float)pNodeAnim->mScalingKeys[ScalingIndex].mTime) / DeltaTime;
+    assert(Factor >= 0.0f && Factor <= 1.0f);
+    const aiVector3D& Start = pNodeAnim->mScalingKeys[ScalingIndex].mValue;
+    const aiVector3D& End   = pNodeAnim->mScalingKeys[NextScalingIndex].mValue;
+    aiVector3D Delta = End - Start;
+    Out = Start + Factor * Delta;
+}
+
+
+void Model::ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const aiMatrix4x4& ParentTransform)
+{    
+    const aiAnimation* pAnimation = scene->mAnimations[0];
+        
+    aiMatrix4x4 NodeTransformation(pNode->mTransformation);
+    // transByMat4(&NodeTransformation, &pNode->mTransformation);
+     
+    const aiNodeAnim* pNodeAnim = FindNodeAnim(pAnimation, pNode->mName);
+    
+    if (pNodeAnim) {
+        // Interpolate scaling and generate scaling transformation matrix
+        aiVector3D Scaling;
+        CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
+        aiMatrix4x4 ScalingM = initScaleTransformAI(Scaling.x, Scaling.y, Scaling.z);
+        
+        // Interpolate rotation and generate rotation transformation matrix
+        aiQuaternion RotationQ;
+        CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);        
+        aiMatrix4x4 RotationM = transByMat3AI(RotationQ.GetMatrix());
+
+        // Interpolate translation and generate translation transformation matrix
+        aiVector3D Translation;
+        CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
+        aiMatrix4x4 TranslationM = initTranslationTransformAI(Translation.x, Translation.y, Translation.z);
+        
+        // Combine the above transformations
+        NodeTransformation = TranslationM * RotationM * ScalingM;
+    }
+       
+    aiMatrix4x4 GlobalTransformation = ParentTransform * NodeTransformation;
+    for (unsigned int i = 0 ; i < bones.size() ; i++) {
+        if (bones[i].name == pNode->mName)
+        {
+            bones[i].finalOffset = GlobalTransformation * (bones[i].offset);
+        }
+    }
+    
+    for (unsigned int i = 0 ; i < pNode->mNumChildren ; i++) {
+        ReadNodeHeirarchy(AnimationTime, pNode->mChildren[i], GlobalTransformation);
+    }
+}
+
+
+void Model::BoneTransform(float TimeInSeconds, std::vector<aiMatrix4x4>& Transforms)
+{
+    // glm::mat4 Identity = init();
+    aiMatrix4x4 Identity = initAI();
+    
+    float TicksPerSecond = (float)(scene->mAnimations[0]->mTicksPerSecond != 0 ? scene->mAnimations[0]->mTicksPerSecond : 25.0f);
+    float TimeInTicks = TimeInSeconds * TicksPerSecond;
+    float AnimationTime = fmod(TimeInTicks, (float)scene->mAnimations[0]->mDuration);
+
+    ReadNodeHeirarchy(AnimationTime, scene->mRootNode, Identity);
+    Transforms.resize(bones.size());
+
+    for (unsigned int i = 0 ; i < bones.size() ; i++) {
+        Transforms[i] = bones[i].finalOffset;
+    }
+}
+
+
+const aiNodeAnim* Model::FindNodeAnim(const aiAnimation* pAnimation, const aiString NodeName)
+{
+    for (unsigned int i = 0 ; i < pAnimation->mNumChannels ; i++) {
+        const aiNodeAnim* pNodeAnim = pAnimation->mChannels[i];
+        
+        if (pNodeAnim->mNodeName == NodeName) {
+            return pNodeAnim;
+        }
+    }
+    
+    return NULL;
 }
