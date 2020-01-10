@@ -20,14 +20,14 @@ message(STATUS "Found GLFW3 in ${GLFW3_INCLUDE_DIR}")
 find_package(ASSIMP REQUIRED)
 message(STATUS "Found ASSIMP in ${ASSIMP_INCLUDE_DIR}")
 
-add_library(STB_IMAGE "src/tools/stb_image.cpp")
-set(LIBS ${LIBS} STB_IMAGE)
+# add_library(STB_IMAGE "src/tools/stb_image.cpp")
+# set(LIBS ${LIBS} STB_IMAGE)
 
-add_library(GLAD "src/tools/glad.c")
-set(LIBS ${LIBS} GLAD)
+# add_library(GLAD "src/tools/glad.c")
+# set(LIBS ${LIBS} GLAD)
 
-add_library(SHADER_LOADER "src/tools/my_shader_loader.cpp")
-set(LIBS ${LIBS} SHADER_LOADER)
+# add_library(SHADER_LOADER "src/tools/my_shader_loader.cpp")
+# set(LIBS ${LIBS} SHADER_LOADER)
 
 # add_library(TEXTURE_LOADER "src/tools/texture_2d.cpp")
 # set(LIBS ${LIBS} TEXTURE_LOADER)
@@ -45,9 +45,9 @@ set(APPLE_LIBS ${APPLE_LIBS} ${GLFW3_LIBRARY})
 set(LIBS ${LIBS} ${APPLE_LIBS} ${ASSIMP_LIBRARY})
 
 file(GLOB SHADERS
-  "src/*.vs"
-  "src/*.fs"
-  "src/*.gs"
+  "src/shader/*.vs"
+  "src/shader/*.fs"
+  "src/shader/*.gs"
 )
 foreach(SHADER ${SHADERS})
   file(COPY ${SHADER} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
