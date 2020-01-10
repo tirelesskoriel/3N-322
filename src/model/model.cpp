@@ -22,15 +22,6 @@
 
 Model::Model(std::string const &path, bool gamma) : gammaCorrection(gamma)
 {
-    m_startTime = GetCurrentTimeMillis();
-
-    for (int i = 0; i < 100; i++)
-    {
-        std::stringstream ss;
-        ss << "gBones[" << i << "]";
-        boneLocations.push_back(ss.str());
-    }
-
     loadModel(path);
 }
 
@@ -60,6 +51,11 @@ void Model::runAnimator(ShaderLoader shader)
     }
 }
 
+bool Model::hasAnimation()
+{
+    return scene && scene->HasAnimations();
+};
+
 void Model::loadModel(std::string const &path)
 {
     scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
@@ -73,6 +69,17 @@ void Model::loadModel(std::string const &path)
     m_GlobalInverseTransform = scene->mRootNode->mTransformation;
     m_GlobalInverseTransform.Inverse();
     
+    if(scene->HasAnimations())
+    {
+        m_startTime = GetCurrentTimeMillis();
+        for (int i = 0; i < 100; i++)
+        {
+            std::stringstream ss;
+            ss << "gBones[" << i << "]";
+            boneLocations.push_back(ss.str());
+        }
+    }
+
     processNode(scene->mRootNode, scene);
 }
 

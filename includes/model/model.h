@@ -29,6 +29,7 @@ public:
     ~Model();
     void Draw(ShaderLoader shader);
     void runAnimator(ShaderLoader shader);
+    bool hasAnimation();
     
 private:
     void loadModel(std::string const &path);
