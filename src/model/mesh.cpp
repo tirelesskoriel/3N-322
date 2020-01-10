@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-void Vertex::add(float w, uint id)
+void Vertex::add(float w, unsigned int id)
     {
         for (unsigned int i = 0; i < MAX_POINT; i++)
         {
@@ -131,15 +131,25 @@ void Mesh::setupMesh()
     //         std::cout << "w1:" << this->vertices[k].weight[0]<< "   b1:" << this->vertices[k].boneId[0];
     //         std::cout << "      w2:" << this->vertices[k].weight[1]<< "  b2:" << this->vertices[k].boneId[1];
     //         std::cout << "      w3:" << this->vertices[k].weight[2]<< "  b3:" << this->vertices[k].boneId[2];
-    //         std::cout << "      w4:" << this->vertices[k].weight[3]<< "  b4:" << this->vertices[k].boneId[3] << std::endl;
+    //         std::cout << "      w4:" << this->vertices[k].weight[3]<< "  b4:" << this->vertices[k].boneId[3];
+    //         std::cout << "      w5:" << this->vertices[k].weight[4]<< "  b5:" << this->vertices[k].boneId[4];
+    //         std::cout << "      w6:" << this->vertices[k].weight[5]<< "  b6:" << this->vertices[k].boneId[5];
+    //         std::cout << "      w7:" << this->vertices[k].weight[6]<< "  b7:" << this->vertices[k].boneId[6];
+    //         std::cout << "      w8:" << this->vertices[k].weight[7]<< "  b8:" << this->vertices[k].boneId[7] << std::endl;
     //     }
     // }
-
+ 
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, MAX_POINT, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
+    glVertexAttribPointer(2, MAX_POINT/2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weight));
 
     glEnableVertexAttribArray(3);
-    glVertexAttribIPointer(3, MAX_POINT, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
+    glVertexAttribPointer(3, MAX_POINT/2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, weight) + (offsetof(Vertex, boneId) - offsetof(Vertex, weight)) / 2));
+
+    glEnableVertexAttribArray(4);
+    glVertexAttribIPointer(4, MAX_POINT/2, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneId));
+
+    glEnableVertexAttribArray(5);
+    glVertexAttribIPointer(5, MAX_POINT/2, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId) + (sizeof(Vertex) - offsetof(Vertex, boneId)) / 2));
 
     glBindVertexArray(0);
 }

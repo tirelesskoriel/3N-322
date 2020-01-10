@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-const int MAX_POINT = 4;
+const int MAX_POINT = 8;
 
 struct Vertex {
     glm::vec3 Position;
@@ -20,8 +20,7 @@ struct Vertex {
     float weight[MAX_POINT] = {0.0f};
     unsigned int boneId[MAX_POINT] = {0};
 
-    void add(float w, uint id);
-
+    void add(float w, unsigned int id);
     bool is_init();
 };
 

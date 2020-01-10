@@ -89,7 +89,10 @@ int main()
 
     // load models
     // -----------
-    Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/mg/source/MANTA2.fbx"));
+    Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"));
+
 
     glm::vec3 light = glm::vec3(1.0f, 1.0f, 1.0f);
     // draw in wireframe

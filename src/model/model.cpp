@@ -18,6 +18,7 @@
 #include <vector>
 #include <sys/time.h>
 #include <model/custom_math.h>
+#include <tools/class_tools.h>
 
 Model::Model(std::string const &path, bool gamma) : gammaCorrection(gamma)
 {
@@ -37,7 +38,7 @@ Model::~Model()
 {
     for (int i = 0; i < meshes.size(); i++)
     {
-        delete meshes[i];
+        SAVE_DEL(meshes[i]);
     }
 }
 
@@ -49,6 +50,9 @@ void Model::Draw(ShaderLoader shader)
 
 void Model::runAnimator(ShaderLoader shader)
 {
+    if(!scene->HasAnimations())
+        return;
+        
     float RunningTime = GetRunningTime();
     BoneTransform(RunningTime, Transforms);
     for (uint i = 0 ; i < Transforms.size() && i < 100 ; i++) {
@@ -204,11 +208,12 @@ Mesh* Model::processMesh(aiMesh *mesh, const aiScene *scene)
     float s = 1;
     material->Get(AI_MATKEY_SHININESS, &s, NULL);
 
+    unsigned int baseIndex = bones.size();
     for (unsigned int m = 0; m < mesh->mNumBones; m++)
     {
         aiBone* aiBone = mesh->mBones[m];
         Bone bone;
-        bone.id = m;
+        bone.id = m + baseIndex;
         bone.offset = aiBone->mOffsetMatrix;
         bone.name = aiBone->mName;
         bones.push_back(bone);
