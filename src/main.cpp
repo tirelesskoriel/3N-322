@@ -113,8 +113,8 @@ int main()
         ourShader.setMat4("view", view);
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -0.5f, -0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));	// it's a bit too big for our scene, so scale it down
+        model = glm::translate(model, glm::vec3(0.0f, -1.5f, -0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourShader.setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
 
