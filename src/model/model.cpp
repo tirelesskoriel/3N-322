@@ -17,7 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <sys/time.h>
-#include <model/custom_math.h>
+#include <tools/custom_math.h>
 #include <tools/syntax_sugar.h>
 #include <tools/data_watcher.h>
 #include <cmath>
@@ -43,11 +43,13 @@ Model::~Model()
 void Model::Draw(glm::mat4& model)
 {
     shader->use();
-    if(auto_size)
-        model = glm::scale(model, glm::vec3(auto_scale_value, auto_scale_value, auto_scale_value));
     
-    shader->setMat4("model", model);
-    shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
+    glm::mat4 internal_model;
+    if(auto_size)
+        internal_model = glm::scale(model, glm::vec3(auto_scale_value, auto_scale_value, auto_scale_value));
+
+    shader->setMat4("model", internal_model);
+    shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(internal_model))));
 
     for(unsigned int i = 0; i < meshes.size(); i++)
         meshes[i]->Draw(shader);

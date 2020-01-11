@@ -9,7 +9,7 @@
 #include <vector>
 
 const int MAX_POINT = 8;
-const int AUTO_SIZE_SCALING_RATIO = 1.5f; // ratio of relative screen 
+const float AUTO_SIZE_SCALING_RATIO = 1.5f; // ratio of relative screen 
 
 struct Vertex {
     glm::vec3 Position;

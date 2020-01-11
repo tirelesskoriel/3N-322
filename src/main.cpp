@@ -6,7 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <tools/my_shader_loader.h>
-#include <model/camera.h>
+// #include <model/camera.h>
+#include <model/surround_camera.h>
 #include <model/model.h>
 #include <cmath>
 
@@ -16,6 +17,8 @@
 #include <sstream>
 #include <tools/syntax_sugar.h>
 #include <tools/filesystem.h>
+#include <tools/custom_math.h>
+
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -28,7 +31,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+SurroundCamera camera(3.0f, 45.0f, 45.0f, glm::vec3(0.0f, 2/3.0f, 0));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -36,6 +39,8 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+glm::mat4 model = glm::mat4(1.0);
 
 int main()
 {
@@ -79,11 +84,11 @@ int main()
     // Model ourModel(FileSystem::getPath("resources/ignore/qw/Quarantine722Wraith.stl"));
     // Model ourModel(FileSystem::getPath("resources/ignore/sd/SheHulk_Decimated.obj"));
     // Model ourModel(FileSystem::getPath("resources/objects/knight/knight.obj"));
-    // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
+    Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dd/gedou.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/Nv_JianKe/NnJianKe_Delete Light UV_Mod.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/r/robot.FBX"));
-    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon 2.5_fbx.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon_Baked_Actions_fbx_6.1_ASCII.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/zz/Spider_3.fbx"));
@@ -109,15 +114,15 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader->use();
-        ourShader->setVec3("viewPos", camera.Position);
+        ourShader->setVec3("viewPos", camera.Eye);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         ourShader->setMat4("projection", projection);
         ourShader->setMat4("view", view);
 
+        // glm::rotate();
         ourModel.runAnimator();
-        glm::mat4 model = glm::mat4(1.0);
         ourModel.Draw(model);
 
 
@@ -170,12 +175,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    model = glm::rotate(model, glm::radians(xoffset), glm::vec3(0.0, 1.0, 0.0f));
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(yoffset);
+    // camera.ProcessMouseScroll(yoffset);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)

@@ -1,10 +1,4 @@
-
-#ifndef CUSTOM_MATH
-#define CUSTOM_MATH
-
-#include <glm/glm.hpp>
-#include <assimp/scene.h>
-#include <iostream>
+#include <tools/custom_math.h>
 
 glm::mat4 transByMat4(const aiMatrix4x4* aim4)
 {
@@ -236,5 +230,3 @@ void copy(glm::mat4* m1, glm::mat4* m2)
     (*m1)[2][0] = (*m2)[2][0];  (*m1)[2][1] = (*m2)[2][1];  (*m1)[2][2] = (*m2)[2][2];  (*m1)[2][3] = (*m2)[2][3];
     (*m1)[3][0] = (*m2)[3][0];  (*m1)[3][1] = (*m2)[3][1];  (*m1)[3][2] = (*m2)[3][2];  (*m1)[3][3] = (*m2)[3][3];
 }
-
-#endif
