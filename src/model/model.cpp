@@ -251,7 +251,8 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
                 break;
             }
         }
-        if(!skip)
+        int r = TextureFromFile(str.C_Str(), this->directory);
+        if(!skip && !IS_ERROR(r))
         {
             Texture texture;
             texture.id = TextureFromFile(str.C_Str(), this->directory);
@@ -268,6 +269,8 @@ unsigned int Model::TextureFromFile(const char *path, const std::string &directo
 {
     std::string filename = std::string(path);
     filename = directory + '/' + filename;
+
+    LOG(filename);
 
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -295,14 +298,16 @@ unsigned int Model::TextureFromFile(const char *path, const std::string &directo
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
+        return textureID;
     }
     else
     {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
+        WARNING_LOG("Texture failed to load at path: ", path);
         stbi_image_free(data);
+        return COMMON_ERROR_CODE;
     }
 
-    return textureID;
+    
 }
 
 long long Model::GetCurrentTimeMillis()

@@ -15,14 +15,13 @@
 #include <string>
 #include <assimp/scene.h>
 #include <sstream>
+#include <tools/syntax_sugar.h>
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-
-#define LOG(M) std::cout << "log:" << (M) << std::endl;
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -72,27 +71,28 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_MULTISAMPLE);
 
 
-    Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/lj/WhaleAnim03.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/mg/source/MANTA2.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/ignore/qw/Quarantine722Wraith.stl"));
+    // Model ourModel(FileSystem::getPath("resources/ignore/sd/SheHulk_Decimated.obj"));
     // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/dd/gedou.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/Nv_JianKe/NnJianKe_Delete Light UV_Mod.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/r/robot.FBX"));
-    // Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"));
-
-    std::string vs("static_model.vs");
-    if(ourModel.hasAnimation())
-        vs = std::string("animation.vs");
-
-    ShaderLoader ourShader(vs.c_str(), "model.fs");
+    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"));
+    
+    ShaderLoader ourShader("animation.vs", "model.fs");
+    ourShader.use();
+    ourShader.setBool("hasAnimation", ourModel.hasAnimation());
 
     glm::vec3 light = glm::vec3(1.0f, 1.0f, 1.0f);
 
     ourShader.use();
     ourShader.setVec3("light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-    ourShader.setVec3("light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+    ourShader.setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
     ourShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     ourShader.setVec3("light.position", glm::vec3(100.0f, 100.0f, 100.0f));
 
@@ -104,7 +104,7 @@ int main()
 
         processInput(window);
 
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.7, 0.7f, 0.7f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
@@ -117,7 +117,7 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -1.5f, -0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourShader.setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
 
