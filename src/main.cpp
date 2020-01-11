@@ -31,9 +31,12 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-SurroundCamera camera(3.0f, 45.0f, 45.0f, glm::vec3(0.0f, 2/3.0f, 0));
+SurroundCamera camera(3.0f, 0.0f, 0.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
+
+float lastXA = 0.0f;
+float lastYA = 0.0f;
 bool firstMouse = true;
 
 // timing
@@ -175,7 +178,29 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    model = glm::rotate(model, glm::radians(xoffset), glm::vec3(0.0, 1.0, 0.0f));
+    lastXA += glm::radians(xoffset);
+    lastYA += glm::radians(-yoffset);
+
+    if(lastXA > 3.2f)
+    {
+        lastXA = 3.2f;
+    }
+    else if (lastXA < -3.2f)
+    {
+        lastXA = -3.2f;
+    }
+
+    if(lastYA > 1.2f)
+    {
+        lastYA = 1.2f;
+    }
+    else if (lastYA < -1.9f)
+    {
+        lastYA = -1.9f;
+    }
+    model = glm::mat4(1.0);
+    model = glm::rotate(model, lastXA, glm::vec3(0.0, 1.0, 0.0f));
+    model = glm::rotate(model, lastYA, glm::vec3(1.0, 0.0, 0.0f));
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)

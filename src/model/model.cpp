@@ -44,9 +44,9 @@ void Model::Draw(glm::mat4& model)
 {
     shader->use();
     
-    glm::mat4 internal_model;
+    glm::mat4 internal_model = glm::translate(model, glm::vec3(0.0f, -2/3.0f, 0.0f));;
     if(auto_size)
-        internal_model = glm::scale(model, glm::vec3(auto_scale_value, auto_scale_value, auto_scale_value));
+        internal_model = glm::scale(internal_model, glm::vec3(auto_scale_value, auto_scale_value, auto_scale_value));
 
     shader->setMat4("model", internal_model);
     shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(internal_model))));
