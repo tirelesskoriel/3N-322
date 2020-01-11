@@ -19,26 +19,29 @@ enum Camera_Movement {
     RIGHT
 };
 
-const float SPEED       =  1.0f;
-const float ZOOM        =  45.0f;
+const float SPEED           =  1.0f;
+const float MIN_ZOOM        =  30.0f;
+const float MAX_ZOOM        =  90.0f;
+const float DEFAULT_ZOOM    =  45.0f;
 
 class SurroundCamera
 {
+private:
+    
+    float Radius = 0.0f;
+    float O_Radius = 0.0f;
+    float Pitch = 0.0f;
+    float Yaw = 0.0f;
+
 public:
+    float Zoom;
     glm::vec3 Eye;
     glm::vec3 Center;
     glm::vec3 Up;
 
-    float Zoom;
-
-    float OffsetPosition;
-    float Radius = 0.0f;
-    float Pitch = 0.0f;
-    float Yaw = 0.0f;
-
     SurroundCamera(float radius, float pitch_angle, float yaw_angle, glm::vec3 target) 
         : Up(glm::vec3(0.0f, 1.0f, 0.0f))
-        , Zoom(ZOOM), Radius(radius), Center(target),Pitch(AP(pitch_angle)), Yaw(AP(yaw_angle))
+        , Zoom(DEFAULT_ZOOM), Radius(radius), O_Radius(radius), Center(target),Pitch(AP(pitch_angle)), Yaw(AP(yaw_angle))
     {
         RefreshEye(false);
     }
@@ -50,13 +53,21 @@ public:
 
     void ProcessKeyboard(Camera_Movement direction, float deltaTime)
     {
-        
         float d = SPEED * deltaTime * PI;
 
         if (direction == FORWARD)
-            Pitch += d;
+            Zoom -= (deltaTime * 20);
+            
         if (direction == BACKWARD)
-            Pitch -= d;
+            Zoom += (deltaTime * 20);
+
+        if(Zoom < MIN_ZOOM)
+            Zoom = MIN_ZOOM;
+        if(Zoom > MAX_ZOOM)
+            Zoom = MAX_ZOOM;
+
+        // Radius = O_Radius * Zoom;
+
         if (direction == RIGHT)
             Yaw += d;
         if (direction == LEFT)

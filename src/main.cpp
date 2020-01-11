@@ -84,11 +84,11 @@ int main()
     // Model ourModel(FileSystem::getPath("resources/ignore/qw/Quarantine722Wraith.stl"));
     // Model ourModel(FileSystem::getPath("resources/ignore/sd/SheHulk_Decimated.obj"));
     // Model ourModel(FileSystem::getPath("resources/objects/knight/knight.obj"));
-    Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dd/gedou.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/Nv_JianKe/NnJianKe_Delete Light UV_Mod.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/r/robot.FBX"));
-    // Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
+    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon 2.5_fbx.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon_Baked_Actions_fbx_6.1_ASCII.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/zz/Spider_3.fbx"));
