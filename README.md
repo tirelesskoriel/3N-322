@@ -37,3 +37,16 @@ fbx 动画渲染
 ![fbx_animation](https://github.com/PENGPPP/3N-322/blob/master/gif/Jan-10-2020%2015-19-04.gif)
 
 下一步: 完善贴图
+
+
+## 2020.01.12
+
+1.有一部分的贴图可用了
+
+2.调整了相机的模式。为了方便用鼠标转动模型，把模型向下移动，世界原点在模型腰部。
+
+![fbx_animation](https://github.com/PENGPPP/3N-322/blob/master/gif/Jan-11-2020%2023-59-00.gif) ![fbx_animation](https://github.com/PENGPPP/3N-322/blob/master/gif/Jan-12-2020%2000-01-19.gif)
+
+下一步: 
+1.指令窗口
+2.其他渲染模式
