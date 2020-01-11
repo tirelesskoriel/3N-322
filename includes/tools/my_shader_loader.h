@@ -11,8 +11,8 @@ class ShaderLoader
 public:
     GLuint ID;
     ShaderLoader(const GLchar* vsp, const GLchar* fsp);
-    void use();
-    void unuse();
+    void use() const;
+    void unuse() const;
     void setBool(const std::string &name, GLboolean value) const;
     void setInt(const std::string &name, GLint value) const;
     void setFloat(const std::string &name, GLfloat value) const;

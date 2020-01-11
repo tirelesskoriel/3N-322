@@ -87,12 +87,12 @@ void ShaderLoader::check_complie(GLuint id, const std::string type)
     }
 }
 
-void ShaderLoader::use() 
+void ShaderLoader::use() const
 { 
     glUseProgram(ID); 
 }
 
-void ShaderLoader::unuse() 
+void ShaderLoader::unuse() const
 { 
     glDeleteProgram(ID); 
 }

@@ -19,16 +19,23 @@ public:
     const aiScene* scene;
     Assimp::Importer importer;
     std::string directory;
-    bool gammaCorrection;
+    bool auto_size{false};
     aiMatrix4x4 m_GlobalInverseTransform;
     long long m_startTime;
     std::vector<aiMatrix4x4> Transforms;
     std::vector<std::string> boneLocations;
 
-    Model(std::string const &path, bool gamma = false);
+    float max_x{0.0f}, min_x{0.0f};
+    float max_y{0.0f}, min_y{0.0f};
+    float max_z{0.0f}, min_z{0.0f};
+
+    float auto_scale_value{1.0f};
+    const ShaderLoader* shader;
+
+    Model(std::string const &path, bool auto_size = false);
     ~Model();
-    void Draw(ShaderLoader shader);
-    void runAnimator(ShaderLoader shader);
+    void Draw(glm::mat4& model);
+    void runAnimator();
     bool hasAnimation();
     
 private:

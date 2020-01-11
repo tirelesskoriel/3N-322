@@ -19,10 +19,15 @@
 #include <sys/time.h>
 #include <model/custom_math.h>
 #include <tools/syntax_sugar.h>
+#include <tools/data_watcher.h>
+#include <cmath>
 
-Model::Model(std::string const &path, bool gamma) : gammaCorrection(gamma)
+Model::Model(std::string const &path, bool auto_size) : auto_size(auto_size)
 {
+    shader = new ShaderLoader("animation.vs", "model.fs");
     loadModel(path);
+    if(auto_size)
+        auto_scale_value = AUTO_SIZE_SCALING_RATIO / fmaxf(fmaxf((max_x - min_x), (max_y - min_y)), (max_z - min_z));
 }
 
 Model::~Model()
@@ -31,15 +36,24 @@ Model::~Model()
     {
         SAVE_DEL(meshes[i]);
     }
+
+    delete shader;
 }
 
-void Model::Draw(ShaderLoader shader)
+void Model::Draw(glm::mat4& model)
 {
+    shader->use();
+    if(auto_size)
+        model = glm::scale(model, glm::vec3(auto_scale_value, auto_scale_value, auto_scale_value));
+    
+    shader->setMat4("model", model);
+    shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
+
     for(unsigned int i = 0; i < meshes.size(); i++)
         meshes[i]->Draw(shader);
 }
 
-void Model::runAnimator(ShaderLoader shader)
+void Model::runAnimator()
 {
     if(!scene->HasAnimations())
         return;
@@ -47,7 +61,7 @@ void Model::runAnimator(ShaderLoader shader)
     float RunningTime = GetRunningTime();
     BoneTransform(RunningTime, Transforms);
     for (uint i = 0 ; i < Transforms.size() && i < 100 ; i++) {
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, boneLocations[i].c_str()), 1, GL_TRUE, &Transforms[i][0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader->ID, boneLocations[i].c_str()), 1, GL_TRUE, &Transforms[i][0][0]);
     }
 }
 
@@ -64,6 +78,9 @@ void Model::loadModel(std::string const &path)
         std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
         return;
     }
+
+    // DoTheImportThing(scene);
+
     directory = path.substr(0, path.find_last_of('/'));
 
     m_GlobalInverseTransform = scene->mRootNode->mTransformation;
@@ -111,6 +128,15 @@ Mesh* Model::processMesh(aiMesh *mesh, const aiScene *scene)
         vector.y = mesh->mVertices[i].y;
         vector.z = mesh->mVertices[i].z;
         vertex.Position = vector;
+
+        max_x = fmaxf(max_x, vector.x);
+        max_y = fmaxf(max_y, vector.y);
+        max_z = fmaxf(max_z, vector.z);
+
+        min_x = fminf(min_x, vector.x);
+        min_y = fminf(min_y, vector.y);
+        min_z = fminf(min_z, vector.z);
+
         // normals
         vector.x = mesh->mNormals[i].x;
         vector.y = mesh->mNormals[i].y;
@@ -175,6 +201,9 @@ Mesh* Model::processMesh(aiMesh *mesh, const aiScene *scene)
 
     std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+    std::vector<Texture> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
+    textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
 
     std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
@@ -267,10 +296,8 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
 
 unsigned int Model::TextureFromFile(const char *path, const std::string &directory)
 {
-    std::string filename = std::string(path);
+    std::string filename = REPLACE(path, '\\', '/');
     filename = directory + '/' + filename;
-
-    LOG(filename);
 
     unsigned int textureID;
     glGenTextures(1, &textureID);

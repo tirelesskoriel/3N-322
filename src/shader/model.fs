@@ -10,6 +10,7 @@ struct Light {
 
 struct Material {
     sampler2D texture_diffuse1;
+    sampler2D texture_ambient1; 
     sampler2D texture_specular1; 
     float shininess;
     vec3 diffuse;
@@ -35,12 +36,12 @@ void main()
 {    
     if (hasTexture)
     {
-        vec3 ambient = light.ambient * texture(material.texture_diffuse1, TexCoords).rgb * material.diffuse;
+        vec3 ambient = light.ambient * texture(material.texture_ambient1, TexCoords).rgb * material.ambient;
         
         // diffuse 
         vec3 norm = normalize(Normal);
-        vec3 lightDir = normalize(light.position - FragPos);
-        // vec3 lightDir = normalize(light.position);  
+        // vec3 lightDir = normalize(light.position - FragPos);
+        vec3 lightDir = normalize(light.position);  
         float diff = max(dot(norm, lightDir), 0.0);
         vec3 diffuse = light.diffuse * (diff * texture(material.texture_diffuse1, TexCoords).rgb * material.diffuse);  
         
@@ -73,6 +74,15 @@ void main()
             
         vec3 result = ambient + diffuse + specular;
         FragColor = vec4(result, 1.0);
+
+        // if(light.ambient.x == 0 || light.ambient.y == 0 || light.ambient.z == 0 
+        // || light.specular.x == 0 || light.specular.y == 0 || light.specular.z == 0 
+        // || light.diffuse.x == 0 || light.diffuse.y == 0 || light.diffuse.z == 0)
+        // {
+        //     FragColor = vec4(result, 1.0);
+        // }else{
+        //     FragColor = vec4(0.0,0.0,0.0, 1.0);
+        // }
     }
     
 }

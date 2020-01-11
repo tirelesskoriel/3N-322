@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <tools/filesystem.h>
 #include <tools/my_shader_loader.h>
 #include <model/camera.h>
 #include <model/model.h>
@@ -16,6 +15,7 @@
 #include <assimp/scene.h>
 #include <sstream>
 #include <tools/syntax_sugar.h>
+#include <tools/filesystem.h>
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -78,23 +78,24 @@ int main()
     // Model ourModel(FileSystem::getPath("resources/objects/mg/source/MANTA2.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/qw/Quarantine722Wraith.stl"));
     // Model ourModel(FileSystem::getPath("resources/ignore/sd/SheHulk_Decimated.obj"));
-    // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/knight/knight.obj"));
+    // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dd/gedou.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/Nv_JianKe/NnJianKe_Delete Light UV_Mod.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/r/robot.FBX"));
-    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"));
-    
-    ShaderLoader ourShader("animation.vs", "model.fs");
-    ourShader.use();
-    ourShader.setBool("hasAnimation", ourModel.hasAnimation());
-
+    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon 2.5_fbx.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon_Baked_Actions_fbx_6.1_ASCII.fbx"));
+    // Model ourModel(FileSystem::getPath("resources/objects/zz/Spider_3.fbx"));
     glm::vec3 light = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    ourShader.use();
-    ourShader.setVec3("light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-    ourShader.setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-    ourShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-    ourShader.setVec3("light.position", glm::vec3(100.0f, 100.0f, 100.0f));
+    const ShaderLoader* ourShader = ourModel.shader;
+    ourShader->use();
+    ourShader->setBool("hasAnimation", ourModel.hasAnimation());
+    ourShader->setVec3("light.ambient", glm::vec3(0.3f, 0.3f, 0.3f));
+    ourShader->setVec3("light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
+    ourShader->setVec3("light.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    ourShader->setVec3("light.position", glm::vec3(10.0f, 10.0f, 10.0f));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -107,22 +108,17 @@ int main()
         glClearColor(0.7, 0.7f, 0.7f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ourShader.use();
-        ourShader.setVec3("viewPos", camera.Position);
+        ourShader->use();
+        ourShader->setVec3("viewPos", camera.Position);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        ourShader->setMat4("projection", projection);
+        ourShader->setMat4("view", view);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -1.5f, -0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));	// it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        ourShader.setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(model))));
-
-        ourModel.runAnimator(ourShader);
-        ourModel.Draw(ourShader);
+        ourModel.runAnimator();
+        glm::mat4 model = glm::mat4(1.0);
+        ourModel.Draw(model);
 
 
         glfwSwapBuffers(window);

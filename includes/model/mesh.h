@@ -9,6 +9,7 @@
 #include <vector>
 
 const int MAX_POINT = 8;
+const int AUTO_SIZE_SCALING_RATIO = 1.5f; // ratio of relative screen 
 
 struct Vertex {
     glm::vec3 Position;
@@ -51,7 +52,7 @@ public:
     unsigned int VAO;
 
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, glm::vec3 diffuse, glm::vec3 specular, glm::vec3 ambient, float shininess);
-    void Draw(ShaderLoader shader);
+    void Draw(const ShaderLoader* shader);
 
 private:
     unsigned int VBO, EBO;

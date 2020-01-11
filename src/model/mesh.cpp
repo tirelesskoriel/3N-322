@@ -40,9 +40,10 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
     setupMesh();
 }
 
-void Mesh::Draw(ShaderLoader shader) 
+void Mesh::Draw(const ShaderLoader* shader) 
 {
     unsigned int diffuseNr  = 1;
+    unsigned int ambientNr  = 1;
     unsigned int specularNr = 1;
     unsigned int normalNr   = 1;
     unsigned int heightNr   = 1;
@@ -54,6 +55,8 @@ void Mesh::Draw(ShaderLoader shader)
         std::string name = textures[i].type;
         if(name == "texture_diffuse")
             number = std::to_string(diffuseNr++);
+        if(name == "texture_ambient")
+            number = std::to_string(ambientNr++);
         else if(name == "texture_specular")
             number = std::to_string(specularNr++);
         else if(name == "texture_normal")
@@ -61,17 +64,17 @@ void Mesh::Draw(ShaderLoader shader)
         else if(name == "texture_height")
             number = std::to_string(heightNr++);
 
-        glUniform1i(glGetUniformLocation(shader.ID, (pre + name + number).c_str()), i);
-        LOG((pre + name + number).c_str());
+        glUniform1i(glGetUniformLocation(shader->ID, (pre + name + number).c_str()), i);
+        // LOG((pre + name + number).c_str());
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
     
-    shader.use();
-    shader.setVec3("material.diffuse", diffuse);
-    shader.setVec3("material.ambient", ambient);
-    shader.setVec3("material.specular", specular);
-    shader.setFloat("material.shininess", shininess);
-    shader.setBool("hasTexture", textures.size() > 0);
+    shader->use();
+    shader->setVec3("material.diffuse", diffuse);
+    shader->setVec3("material.ambient", ambient);
+    shader->setVec3("material.specular", specular);
+    shader->setFloat("material.shininess", shininess);
+    shader->setBool("hasTexture", textures.size() > 0);
     
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
