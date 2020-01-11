@@ -43,6 +43,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+bool autoRotate = false;
+
 glm::mat4 model = glm::mat4(1.0);
 
 int main()
@@ -87,11 +89,14 @@ int main()
     // Model ourModel(FileSystem::getPath("resources/ignore/qw/Quarantine722Wraith.stl"));
     // Model ourModel(FileSystem::getPath("resources/ignore/sd/SheHulk_Decimated.obj"));
     // Model ourModel(FileSystem::getPath("resources/objects/knight/knight.obj"));
-    // Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
+    Model ourModel(FileSystem::getPath("resources/objects/sz/sz.fbx"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dd/gedou.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/Nv_JianKe/NnJianKe_Delete Light UV_Mod.fbx"));
     // Model ourModel(FileSystem::getPath("resources/ignore/r/robot.FBX"));
-    Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/gd/sazabi_1.obj"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/hat/model.obj"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/Sphere-BotBasic/Armature_001-(FBX 7.4 binary mit Animation).fbx"), true);
+    // Model ourModel(FileSystem::getPath("resources/objects/gun/Handgun_fbx_7.4_binary.fbx"), true);
     // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon 2.5_fbx.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon_Baked_Actions_fbx_6.1_ASCII.fbx"));
     // Model ourModel(FileSystem::getPath("resources/objects/zz/Spider_3.fbx"));
@@ -100,9 +105,9 @@ int main()
     const ShaderLoader* ourShader = ourModel.shader;
     ourShader->use();
     ourShader->setBool("hasAnimation", ourModel.hasAnimation());
-    ourShader->setVec3("light.ambient", glm::vec3(0.3f, 0.3f, 0.3f));
-    ourShader->setVec3("light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
-    ourShader->setVec3("light.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    ourShader->setVec3("light.ambient", glm::vec3(1.0f, 1.0f, 1.0f));
+    ourShader->setVec3("light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+    ourShader->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     ourShader->setVec3("light.position", glm::vec3(10.0f, 10.0f, 10.0f));
 
     while (!glfwWindowShouldClose(window))
@@ -126,6 +131,11 @@ int main()
 
         // glm::rotate();
         ourModel.runAnimator();
+
+        if(autoRotate)
+        {
+            model = glm::rotate(model, glm::radians((float)glfwGetTime()) * 0.01f, glm::vec3(0.0, 1.0, 0.0));
+        }
         ourModel.Draw(model);
 
 
@@ -139,6 +149,12 @@ int main()
 
 void processInput(GLFWwindow *window)
 {
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        autoRotate = !autoRotate;
+
+    if (autoRotate)
+        return;
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
@@ -150,7 +166,6 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -162,7 +177,7 @@ bool hold_press = false;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    if (!hold_press)
+    if (!hold_press || autoRotate)
         return;
 
     if (firstMouse)

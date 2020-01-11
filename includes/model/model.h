@@ -31,6 +31,7 @@ public:
 
     float auto_scale_value{1.0f};
     const ShaderLoader* shader;
+    bool hasNormal;
 
     Model(std::string const &path, bool auto_size = false);
     ~Model();

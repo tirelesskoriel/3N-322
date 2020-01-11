@@ -21,7 +21,7 @@ enum Camera_Movement {
 
 const float SPEED           =  1.0f;
 const float MIN_ZOOM        =  30.0f;
-const float MAX_ZOOM        =  90.0f;
+const float MAX_ZOOM        =  190.0f;
 const float DEFAULT_ZOOM    =  45.0f;
 
 class SurroundCamera

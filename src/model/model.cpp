@@ -28,6 +28,7 @@ Model::Model(std::string const &path, bool auto_size) : auto_size(auto_size)
     loadModel(path);
     if(auto_size)
         auto_scale_value = AUTO_SIZE_SCALING_RATIO / fmaxf(fmaxf((max_x - min_x), (max_y - min_y)), (max_z - min_z));
+    LOG(auto_scale_value);
 }
 
 Model::~Model()
@@ -49,7 +50,9 @@ void Model::Draw(glm::mat4& model)
         internal_model = glm::scale(internal_model, glm::vec3(auto_scale_value, auto_scale_value, auto_scale_value));
 
     shader->setMat4("model", internal_model);
-    shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(internal_model))));
+    
+    if(hasNormal)
+        shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(internal_model))));
 
     for(unsigned int i = 0; i < meshes.size(); i++)
         meshes[i]->Draw(shader);
@@ -80,9 +83,8 @@ void Model::loadModel(std::string const &path)
         std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
         return;
     }
-
+    
     // DoTheImportThing(scene);
-
     directory = path.substr(0, path.find_last_of('/'));
 
     m_GlobalInverseTransform = scene->mRootNode->mTransformation;
@@ -140,10 +142,14 @@ Mesh* Model::processMesh(aiMesh *mesh, const aiScene *scene)
         min_z = fminf(min_z, vector.z);
 
         // normals
-        vector.x = mesh->mNormals[i].x;
-        vector.y = mesh->mNormals[i].y;
-        vector.z = mesh->mNormals[i].z;
-        vertex.Normal = vector;
+        if(mesh->HasNormals())
+        {
+            hasNormal = true;
+            vector.x = mesh->mNormals[i].x;
+            vector.y = mesh->mNormals[i].y;
+            vector.z = mesh->mNormals[i].z;
+            vertex.Normal = vector;
+        }
 
         // texture coordinates
         if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
