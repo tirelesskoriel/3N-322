@@ -38,7 +38,7 @@ int main(int, char**)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
-    if (gladLoadGL())
+    if (gladLoadGL() == 0)
     {
         fprintf(stderr, "Failed to initialize OpenGL loader!\n");
         return 1;
@@ -54,9 +54,7 @@ int main(int, char**)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-
     ImGui::StyleColorsDark();
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
