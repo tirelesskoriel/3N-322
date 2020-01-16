@@ -38,7 +38,7 @@ int main(int, char**)
         return 1;
 
     glfwMakeContextCurrent(window);
-    // glfwSwapInterval(1); // Enable vsync
+    glfwSwapInterval(1); // Enable vsync
 
     if (gladLoadGL() == 0)
     {
@@ -102,7 +102,7 @@ int main(int, char**)
         ImGui::RadioButton("3N-322", &view_type_radio, 1);
         if(view_type_radio == 1)
         {
-            ImGui::SliderInt("PL", &pixel_level, 1, 8);
+            ImGui::SliderInt("PL", &pixel_level, 1, FRAME_BUFFER_COUNT);
             render->is_3n = true;
             render->PL = pixel_level;
         }

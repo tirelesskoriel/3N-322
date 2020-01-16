@@ -4,7 +4,7 @@
 #include <model/model.h>
 #include <context.h>
 
-const unsigned int FRAME_BUFFER_COUNT = 8;
+const unsigned int FRAME_BUFFER_COUNT = 16;
 
 class OpenglRender
 {

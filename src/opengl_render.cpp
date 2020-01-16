@@ -8,9 +8,12 @@
 #include <GLFW/glfw3.h>
 
 const float scale = 4.0f;
+const ShaderLoader* M_S; // 3d view shader
+const ShaderLoader* TN_S; // 3N-322 shader
 
 // TODO
 void createFrameBuffer(const Context* context, float scale, unsigned int* framebuffer, unsigned int* textureColorbuffer);
+void initShader(const ShaderLoader* s, Model* m);
 
 OpenglRender::OpenglRender(Context* context): context(context)
 {
@@ -32,13 +35,14 @@ OpenglRender::OpenglRender(Context* context): context(context)
 	// Model ourModel(FileSystem::getPath("resources/objects/dragon/Dragon_Baked_Actions_fbx_6.1_ASCII.fbx"));
 	// Model ourModel(FileSystem::getPath("resources/objects/zz/Spider_3.fbx"));
 
-	modelShader = new ShaderLoader("animation.vs", "model_2d.fs");
-	modelShader->use();
-	modelShader->setBool("hasAnimation", model->hasAnimation());
-	modelShader->setVec3("light.ambient", glm::vec3(1.0f, 1.0f, 1.0f));
-	modelShader->setVec3("light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
-	modelShader->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-	modelShader->setVec3("light.position", glm::vec3(10.0f, 10.0f, 10.0f));
+	TN_S = new ShaderLoader("animation.vs", "model_2d.fs");
+	M_S = new ShaderLoader("animation.vs", "model_2d.fs");
+
+	initShader(TN_S, model);
+	initShader(M_S, model);
+
+	modelShader = M_S;
+	
 
 	// TODO
 	for(int i = 0; i < FRAME_BUFFER_COUNT; i++)
@@ -83,18 +87,21 @@ OpenglRender::~OpenglRender()
 	glDeleteTextures(FRAME_BUFFER_COUNT, textureColorbuffers);
 
     delete model;
-    delete seShader;
+    delete TN_S;
+    delete M_S;
 }
 
 void OpenglRender::render()
 {   
 	if(is_3n)
 	{
+		modelShader = TN_S;
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffers[PL - 1]);
 		glViewport(0,0,context->scrWidth / PL ,context->scrHeight / PL);
 	}
 	else
 	{
+		modelShader = M_S;
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffers[0]);
 		glViewport(0,0,context->scrWidth ,context->scrHeight);
 	}
@@ -128,7 +135,17 @@ void OpenglRender::render()
 	modelShader->setMat4("view", view);
 	model->runAnimator(modelShader);
 
-	glm::mat4 modelmat4 = glm::mat4(1.0f);
+	glm::mat4 modelmat4;
+	if(is_3n)
+	{
+		modelmat4 = glm::mat4(1.0f);
+		modelmat4 = glm::scale(modelmat4, glm::vec3(0.83f,0.83f,0.83f)); // magic number!
+	}
+	else
+	{
+		modelmat4 = glm::mat4(1.0f);
+	}
+	
 	model->Draw(modelShader, modelmat4);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -171,4 +188,14 @@ void createFrameBuffer(const Context* context, float scale, unsigned int* frameb
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void initShader(const ShaderLoader* s, Model* m)
+{
+	s->use();
+	s->setBool("hasAnimation", m->hasAnimation());
+	s->setVec3("light.ambient", glm::vec3(1.0f, 1.0f, 1.0f));
+	s->setVec3("light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+	s->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+	s->setVec3("light.position", glm::vec3(10.0f, 10.0f, 10.0f));
 }
