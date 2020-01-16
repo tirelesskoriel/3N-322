@@ -30,13 +30,12 @@ public:
     float max_z{0.0f}, min_z{0.0f};
 
     float auto_scale_value{1.0f};
-    const ShaderLoader* shader;
     bool hasNormal;
 
     Model(std::string const &path, bool auto_size = false);
     ~Model();
-    void Draw(glm::mat4& model);
-    void runAnimator();
+    void Draw(const ShaderLoader* shader, glm::mat4& model) const;
+    void runAnimator(const ShaderLoader* shader);
     bool hasAnimation();
     
 private:

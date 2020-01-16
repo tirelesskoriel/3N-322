@@ -15,3 +15,20 @@ std::string Context::getPath(const std::string& path)
 {
     return fileSystem->getPath(path);
 }
+
+float Context::W2H()
+{
+    return scrWidth / (float)scrHeight;
+}
+float Context::Context::H2W()
+{
+    return scrHeight / (float)scrWidth;
+}
+float Context::W2W()
+{
+    return scrWidth / (float)scrWidth;
+}
+float Context::Context::H2H()
+{
+    return scrHeight / (float)scrHeight;
+}

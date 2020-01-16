@@ -24,11 +24,11 @@
 
 Model::Model(std::string const &path, bool auto_size) : auto_size(auto_size)
 {
-    shader = new ShaderLoader("animation.vs", "model.fs");
     loadModel(path);
     if(auto_size)
         auto_scale_value = AUTO_SIZE_SCALING_RATIO / fmaxf(fmaxf((max_x - min_x), (max_y - min_y)), (max_z - min_z));
     LOG(auto_scale_value);
+
 }
 
 Model::~Model()
@@ -38,10 +38,9 @@ Model::~Model()
         SAVE_DEL(meshes[i]);
     }
 
-    delete shader;
 }
 
-void Model::Draw(glm::mat4& model)
+void Model::Draw(const ShaderLoader* shader, glm::mat4& model) const
 {
     shader->use();
     
@@ -55,10 +54,13 @@ void Model::Draw(glm::mat4& model)
         shader->setMat3("nor_model", glm::mat3(glm::transpose(glm::inverse(internal_model))));
 
     for(unsigned int i = 0; i < meshes.size(); i++)
+    {
         meshes[i]->Draw(shader);
+    }
+       
 }
 
-void Model::runAnimator()
+void Model::runAnimator(const ShaderLoader* shader)
 {
     if(!scene->HasAnimations())
         return;

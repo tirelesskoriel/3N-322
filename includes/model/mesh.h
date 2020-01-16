@@ -23,6 +23,8 @@ struct Vertex {
 
     void add(float w, unsigned int id);
     bool is_init();
+
+    ~Vertex();
 };
 
 struct Bone{

@@ -16,8 +16,6 @@ out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;
 out vec3 TexColor;
-out vec3 Tangent;
-out vec3 Bitangent;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -33,8 +31,6 @@ void main()
 {
     TexCoords = aTexCoords;
     TexColor = aTexColor;
-    Tangent = aTangent;
-    Bitangent = aBitangent;
     
     mat4 BoneTransform;
 
@@ -57,5 +53,8 @@ void main()
 
     FragPos = vec3(model * (BoneTransform * vec4(aPos, 1.0)));
     Normal = nor_model * (mat3(BoneTransform) * aNormal);
-    gl_Position = projection * view * model * (BoneTransform * vec4(aPos, 1.0));
+
+    vec4 R = projection * view * model * (BoneTransform * vec4(aPos, 1.0));
+    // vec4 R = projection * view * model * vec4(aPos, 1.0);
+    gl_Position = vec4(R.x, R.y, R.z, R.w);
 }

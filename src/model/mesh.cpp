@@ -9,6 +9,11 @@
 #include <vector>
 #include <tools/syntax_sugar.h>
 
+Vertex::~Vertex()
+{
+    
+}
+
 void Vertex::add(float w, unsigned int id)
 {
     for (unsigned int i = 0; i < MAX_POINT; i++)
@@ -70,16 +75,15 @@ void Mesh::Draw(const ShaderLoader* shader)
     }
     
     shader->use();
-    shader->setVec3("material.diffuse", diffuse);
-    shader->setVec3("material.ambient", ambient);
-    shader->setVec3("material.specular", specular);
-    shader->setFloat("material.shininess", shininess);
-    shader->setBool("hasTexture", textures.size() > 0);
+    shader->setVec3("materialColor.diffuse", diffuse);
+    shader->setVec3("materialColor.ambient", ambient);
+    shader->setVec3("materialColor.specular", specular);
+    shader->setFloat("materialColor.shininess", shininess);
+    shader->setFloat("hasTexture", textures.size() > 0);
     
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-
     glActiveTexture(GL_TEXTURE0);
 }
 

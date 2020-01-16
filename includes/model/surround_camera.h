@@ -29,7 +29,6 @@ class SurroundCamera
 private:
     
     float Radius = 0.0f;
-    float O_Radius = 0.0f;
     float Pitch = 0.0f;
     float Yaw = 0.0f;
 
@@ -40,8 +39,7 @@ public:
     glm::vec3 Up;
 
     SurroundCamera(float radius, float pitch_angle, float yaw_angle, glm::vec3 target) 
-        : Up(glm::vec3(0.0f, 1.0f, 0.0f))
-        , Zoom(DEFAULT_ZOOM), Radius(radius), O_Radius(radius), Center(target),Pitch(AP(pitch_angle)), Yaw(AP(yaw_angle))
+        : Up(glm::vec3(0.0f, 1.0f, 0.0f)), Zoom(DEFAULT_ZOOM), Radius(radius), Center(target),Pitch(AP(pitch_angle)), Yaw(AP(yaw_angle))
     {
         RefreshEye(false);
     }
@@ -65,8 +63,6 @@ public:
             Zoom = MIN_ZOOM;
         if(Zoom > MAX_ZOOM)
             Zoom = MAX_ZOOM;
-
-        // Radius = O_Radius * Zoom;
 
         if (direction == RIGHT)
             Yaw += d;
