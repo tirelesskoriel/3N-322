@@ -3,7 +3,7 @@
 
 `不好用` `不通用` `不跨平台` ---- 3D模型动画转2D像素风格图片序列的库
 
-基于OpenGL、Assimp和LearnOpenglDemo。
+基于OpenGL、Assimp。
 
 目标是达成《死亡细胞》等同效果。
 
